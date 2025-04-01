@@ -1,0 +1,16 @@
+{
+  "compilerOptions": {
+    "target": "es6", // Specify ECMAScript target version.
+    "module": "commonjs", // Specify module code generation.
+    "outDir": "./build", // Redirect output structure to the directory.
+    "rootDir": "./", // Specify the root directory of input files.
+    "strict": true, // Enable all strict type-checking options.
+    // "allowJs": true,
+    "esModuleInterop": true // Enables emit interoperability with ES modules.
+  },
+  "include": [
+    "src/**/*", // Include all files in the 'src' directory.
+    "index.ts",
+    "express.d.ts"
+  ]
+}
