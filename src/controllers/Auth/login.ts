@@ -23,13 +23,13 @@ const login = async (req: Request, res: Response): Promise<void> => {
     const user = await User.findOne({ username }).exec();
     // console.log("user : ", user);
     if (!user) {
-      return httpStatus.notFound(res, "Invalid username or password");
+      return httpStatus.badRequest(res, "Invalid username or password");
     }
 
     // Compare password using bcrypt
     const isPasswordMatch = await bcrypt.compare(password, user.password);
     if (!isPasswordMatch!) {
-      return httpStatus.notFound(res, "Invalid username or password");
+      return httpStatus.badRequest(res, "Invalid username or password");
     }
 
     // Login Successfull
@@ -74,7 +74,7 @@ const login = async (req: Request, res: Response): Promise<void> => {
     httpStatus.success(res, userDetails, "Login Succcessful");
   } catch (error) {
     console.error(error);
-    httpStatus.badRequest(res, "Login Failed");
+    httpStatus.internalServerError(res, "Login Failed");
   }
 };
 

@@ -120,7 +120,7 @@ const storeMessage = async (messageData: {
 }) => {
   try {
     const { data } = await axios.post(
-      "http://localhost:3000/users/chat/messages",
+      `${process.env.BACKEND_URL}/users/chat/messages`,
       messageData,
       {
         withCredentials: true,

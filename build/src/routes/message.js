@@ -1,0 +1,12 @@
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+const express_1 = require("express");
+const message_1 = require("../controllers/Chat/message");
+const router = (0, express_1.Router)();
+router.get("/messages", message_1.getMessages);
+router.post("/messages", message_1.sendMessage);
+router.patch("/messages", message_1.updateMessage);
+router.delete("/messages", message_1.deleteChatMessages);
+router.patch("/messages/deleteforeveryone", message_1.deleteMessageForEveryone);
+router.patch("/messages/deleteforme", message_1.deleteMessageForMe);
+exports.default = router;
