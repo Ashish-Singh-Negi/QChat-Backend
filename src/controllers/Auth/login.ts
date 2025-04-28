@@ -64,11 +64,13 @@ const login = async (req: Request, res: Response): Promise<void> => {
     res.cookie("access-token", accessToken, {
       httpOnly: true,
       maxAge: ACCESS_TOKEN_EXP,
+      sameSite: "none"
     });
 
     res.cookie("refresh-token", refreshToken, {
       httpOnly: true,
       maxAge: REFRESH_TOKEN_EXP,
+      sameSite: "none"
     });
 
     httpStatus.success(res, userDetails, "Login Succcessful");
