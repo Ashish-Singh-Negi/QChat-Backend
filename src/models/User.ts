@@ -34,6 +34,11 @@ const UserSchema = new Schema(
       type: String,
       default: null,
     },
+    starMessages: {
+      type: [mongoose.Schema.Types.ObjectId],
+      default: [],
+      ref: "Message",
+    },
     following: {
       type: [mongoose.Schema.Types.ObjectId],
       default: [],

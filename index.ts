@@ -44,7 +44,7 @@ import friendsRouter from "./src/routes/friend";
 import messagesRouter from "./src/routes/message";
 
 app.use("/auth", authRouter);
-app.use("/users/chat", messagesRouter);
+app.use("/users/chats", messagesRouter);
 
 app.use(verify);
 
@@ -120,7 +120,7 @@ const storeMessage = async (messageData: {
 }) => {
   try {
     const { data } = await axios.post(
-      `${process.env.BACKEND_URL}/users/chat/messages`,
+      `${process.env.BACKEND_URL}/users/chats/messages`,
       messageData,
       {
         withCredentials: true,

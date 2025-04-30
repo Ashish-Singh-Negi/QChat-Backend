@@ -24,6 +24,10 @@ const MessageSchema = new Schema(
       type: Boolean,
       default: false,
     },
+    isStar: {
+      type: Boolean,
+      default: false,
+    },
     visibleToEveryone: {
       type: Boolean,
       default: true,

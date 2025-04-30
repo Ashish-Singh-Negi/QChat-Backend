@@ -4,18 +4,17 @@ import httpStatus from "../../utils/response-codes";
 
 import Message from "../../models/Message";
 import Room from "../../models/Room";
+import User from "../../models/User";
 
 const getMessages = async (req: Request, res: Response) => {
   try {
-    console.log(req.query);
+    const { crid } = req.params;
 
-    const chatRoomId = req.query.crid;
+    console.log("CRID : ", crid);
 
-    // console.log(" ChatRoomID is : ", chatRoomId);
+    if (!crid) return httpStatus.badRequest(res, "crid is Required");
 
-    if (!chatRoomId) return httpStatus.badRequest(res, "chatRoomId is Request");
-
-    const chatRoom = await Room.findById(chatRoomId).populate("messages");
+    const chatRoom = await Room.findById(crid).populate("messages");
 
     if (!chatRoom) return httpStatus.notFound(res, "No chats exists");
 
@@ -23,6 +22,25 @@ const getMessages = async (req: Request, res: Response) => {
   } catch (error) {
     console.log(error);
     httpStatus.internalServerError(res, "GET Messages : Internal Server Error");
+  }
+};
+
+const getMessage = async (req: Request, res: Response) => {
+  try {
+    const { mid } = req.params;
+
+    console.log("MID", mid);
+
+    if (!mid) return httpStatus.badRequest(res, "mid is Required");
+
+    const message = await Message.findById(mid);
+
+    if (!message) return httpStatus.notFound(res, "Message Not Found");
+
+    httpStatus.success(res, message, "Success");
+  } catch (error) {
+    console.log(error);
+    httpStatus.internalServerError(res, "GET Message : Internal Server Error");
   }
 };
 
@@ -142,11 +160,12 @@ const updateMessage = async (req: Request, res: Response) => {
         } else {
           const pinMessageId = chatRoom.pinMessages[0];
 
-          const pinMessage = await Message.findById(pinMessageId).exec();
+          const pinMessage = await Message.findById(pinMessageId);
 
-          pinMessage.isPinned = false;
-
-          pinMessage.save();
+          if (pinMessage) {
+            pinMessage.isPinned = false;
+            pinMessage.save();
+          }
 
           chatRoom.pinMessages.shift();
           chatRoom.pinMessages.push(mid);
@@ -168,10 +187,37 @@ const updateMessage = async (req: Request, res: Response) => {
 
     case "STAR":
       try {
-        const { mid } = req.body;
+        const { uid, mid } = req.body;
+
+        const message = await Message.findById(mid).exec();
+        const isStar = message.isStar;
+
+        const user = await User.findById(uid).select("-password").exec();
+
+        if (isStar) {
+          console.log("Remove star message");
+          message.isStar = false;
+
+          const index = user.starMessages.indexOf(mid);
+          user.starMessages.splice(index, 1);
+        } else {
+          console.log("Add star message");
+          message.isStar = true;
+          user.starMessages.push(mid);
+        }
+
+        await user.save();
+        await message.save();
+
+        return httpStatus.success(res, { message, user }, "Message Stared");
       } catch (error) {
         console.log(error);
+        return httpStatus.internalServerError(
+          res,
+          "Star Internal Server Error"
+        );
       }
+      break;
 
     default:
       break;
@@ -180,7 +226,7 @@ const updateMessage = async (req: Request, res: Response) => {
 
 const deleteChatMessages = async (req: Request, res: Response) => {
   try {
-    const { crid } = req.query;
+    const { crid } = req.params;
 
     console.log("CRID  ", crid);
 
@@ -213,7 +259,7 @@ const deleteChatMessages = async (req: Request, res: Response) => {
 
 const deleteMessageForEveryone = async (req: Request, res: Response) => {
   try {
-    const { mid } = req.body;
+    const { mid } = req.params;
 
     console.log("MID : ", mid);
 
@@ -237,7 +283,7 @@ const deleteMessageForEveryone = async (req: Request, res: Response) => {
 
 const deleteMessageForMe = async (req: Request, res: Response) => {
   try {
-    const { mid } = req.body;
+    const { mid } = req.params;
 
     console.log(mid);
 
@@ -262,6 +308,7 @@ const deleteMessageForMe = async (req: Request, res: Response) => {
 
 export {
   getMessages,
+  getMessage,
   sendMessage,
   updateMessage,
   deleteMessageForEveryone,
