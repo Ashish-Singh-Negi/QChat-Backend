@@ -55,11 +55,15 @@ const refresh = async (req: Request, res: Response, next: NextFunction) => {
     res.cookie("access-token", accessToken, {
       httpOnly: true,
       maxAge: ACCESS_TOKEN_EXP,
+      sameSite: "none",
+      secure: true
     });
 
     res.cookie("refresh-token", refreshToken, {
       httpOnly: true,
       maxAge: REFRESH_TOKEN_EXP,
+      sameSite: "none",
+      secure: true
     });
 
     return httpStatus.created(
