@@ -5,37 +5,35 @@ import Room from "../../models/Room";
 
 const sendFriendRequest = async (req: Request, res: Response) => {
   try {
-    const { friendusername } = req.body;
+    const { friendUsername } = req.body;
 
     const uid = req.uid;
 
     console.log(" UID : ", uid);
-    console.log(" f username : ", friendusername);
+    console.log(" f username : ", friendUsername);
 
-    if (!friendusername)
+    if (!friendUsername)
       return httpStatus.badRequest(res, "Required friend username");
 
     const user = await User.findById(uid).select("-password");
 
     if (!user) return httpStatus.forbidden(res, "unauthorized");
 
-    if (user.username === friendusername)
+    if (user.username === friendUsername)
       return httpStatus.badRequest(res, "Bad request");
 
-    const friend = await User.findOne({ username: friendusername }).select(
+    const friend = await User.findOne({ username: friendUsername }).select(
       "-password"
     );
 
     if (!friend)
-      return httpStatus.badRequest(res, `${friendusername} not found`);
+      return httpStatus.badRequest(res, `${friendUsername} not found`);
 
-    const isRequestExist = friend.friendRequestList.find(
-      (id: string) => id === uid
-    );
+    const isRequestExist = friend.friendRequestList.indexOf(uid);
 
     console.log(isRequestExist);
 
-    if (isRequestExist)
+    if (isRequestExist > -1)
       return httpStatus.badRequest(res, "Request already send");
 
     friend.friendRequestList.push(uid);
@@ -51,7 +49,9 @@ const sendFriendRequest = async (req: Request, res: Response) => {
 
 const acceptFriendRequest = async (req: Request, res: Response) => {
   try {
-    const { fid } = req.body;
+    const { fid } = req.params;
+
+    console.log("Accept FR fid : ", fid);
 
     const uid = req.uid;
 
@@ -100,7 +100,7 @@ const acceptFriendRequest = async (req: Request, res: Response) => {
 
 const rejectfriendRequest = async (req: Request, res: Response) => {
   try {
-    const { fid } = req.body;
+    const { fid } = req.params;
 
     const uid = req.uid;
 
@@ -119,10 +119,10 @@ const rejectfriendRequest = async (req: Request, res: Response) => {
 
     await user.save();
 
-    return httpStatus.success(res, user, "Rejected Successfully");
+    httpStatus.success(res, user, "Request Rejected");
   } catch (error) {
     console.error(error);
-    return httpStatus.internalServerError(res, "Reject friend request Failed");
+    httpStatus.internalServerError(res, "Reject friend request Failed");
   }
 };
 

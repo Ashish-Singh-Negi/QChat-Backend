@@ -15,7 +15,6 @@ router.get("/:crid/messages", getMessages);
 router.get("/messages/:mid", getMessage);
 router.post("/messages", sendMessage);
 router.patch("/messages", updateMessage);
-
 router.delete("/:crid/messages", deleteChatMessages);
 
 router.patch("/messages/:mid/deleteforeveryone", deleteMessageForEveryone);

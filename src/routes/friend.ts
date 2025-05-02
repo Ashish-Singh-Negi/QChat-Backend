@@ -5,13 +5,12 @@ import {
   sendFriendRequest,
 } from "../controllers/Friend/request";
 import { removeFriend } from "../controllers/Friend/remove";
-import httpStatus from "../utils/response-codes";
 
 const router = Router();
 
 router.patch("/friends/request", sendFriendRequest);
-router.patch("/friends/accept", acceptFriendRequest);
-router.patch("/friends/reject", rejectfriendRequest);
+router.patch("/friends/:fid/accept", acceptFriendRequest);
+router.patch("/friends/:fid/reject", rejectfriendRequest);
 
 // Remove user from friend list
 router.patch("/friends/remove", removeFriend);

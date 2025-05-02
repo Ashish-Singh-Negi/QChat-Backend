@@ -50,16 +50,72 @@ app.use(verify);
 
 app.use("/users", friendsRouter);
 
+app.post("/user/friends/notifications", (req: Request, res: Response) => {
+  try {
+    const { notification } = req.body;
+
+    console.log("NOTIFICATION : ", notification);
+
+    return httpStatus.success(res, { notification }, "Notification");
+  } catch (error) {
+    console.error(error);
+    return httpStatus.internalServerError(
+      res,
+      "Notifications Internal Sever Error"
+    );
+  }
+});
+
+app.get("/users", async (req: Request, res: Response) => {
+  try {
+    const { username } = req.query;
+
+    if (!username) return httpStatus.badRequest(res, "username is required");
+
+    const users = await User.find()
+      .select(
+        "-password -blacklist -friendRequestList -email -favouritesContactList -starMessages"
+      )
+      .lean();
+
+    console.log("Users : ", users);
+
+    const usernames = users.filter((user) => {
+      if (user.username.toLowerCase().startsWith(username)) {
+        return user.username;
+      }
+    });
+
+    if (!usernames) return httpStatus.notFound(res, "username not found");
+
+    return httpStatus.success(res, usernames, "Founded");
+  } catch (error) {
+    console.error(error);
+    return httpStatus.internalServerError(res, "Search Internal Sever Error");
+  }
+});
+
 app.get("/users/profile", async (req: Request, res: Response) => {
   try {
     console.log(req.url);
 
     const uid = req.uid;
 
-    console.log(req.query);
-    console.log("Params : ", req.params);
+    const { filter } = req.query;
 
-    console.log(uid);
+    console.log("Filter ", filter);
+
+    if (filter) {
+      if (typeof filter === "string") {
+        try {
+          const data = await User.findById(uid).select(`${filter} -_id`);
+
+          return httpStatus.success(res, data, "filtered profile success");
+        } catch (error) {
+          console.error(error);
+        }
+      }
+    }
 
     const userProfile = await User.findById(uid).select("-password").exec();
 
@@ -72,9 +128,9 @@ app.get("/users/profile", async (req: Request, res: Response) => {
   }
 });
 
-app.get("/users/friends", async (req: Request, res: Response) => {
+app.get("/users/friends/:fid", async (req: Request, res: Response) => {
   try {
-    const fid = req.query.fid;
+    const { fid } = req.params;
 
     const friendProfile = await User.findById(fid).select("-password").exec();
 
