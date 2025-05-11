@@ -15,23 +15,55 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.removeFriend = void 0;
 const response_codes_1 = __importDefault(require("../../utils/response-codes"));
 const User_1 = __importDefault(require("../../models/User"));
+const Room_1 = __importDefault(require("../../models/Room"));
+const Message_1 = __importDefault(require("../../models/Message"));
 const removeFriend = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
-        const { fid } = req.body;
+        const { fid } = req.params;
         const uid = req.uid;
         if (!fid)
-            return response_codes_1.default.badRequest(res, "Invalid FID");
+            return response_codes_1.default.badRequest(res, "Invalid Friend ID");
+        // Retrieve user and exclude password
         const user = yield User_1.default.findById(uid).select("-password");
-        const index = user.friends.indexOf(fid);
-        if (index === -1)
-            return response_codes_1.default.notFound(res, "Already Removed");
-        user.friends.splice(index, 1);
-        yield user.save();
-        return response_codes_1.default.success(res, user, "Friend Removed");
+        console.log("User:", user);
+        // Locate friend in user's contact list
+        const contactIndex = user.contactList.findIndex((friend) => friend.contactId.toString() === fid);
+        if (contactIndex === -1)
+            return response_codes_1.default.notFound(res, "contact already removed");
+        const friendIndex = user.friendList.findIndex((friend) => friend.toString() === fid);
+        if (friendIndex === -1)
+            return response_codes_1.default.notFound(res, "Friend already removed");
+        // Extract roomId for future use
+        const { roomId } = user.contactList[contactIndex];
+        // Remove friend from the friend list & contact list
+        user.friendList.splice(friendIndex, 1);
+        user.contactList.splice(contactIndex, 1);
+        yield user.save(); // Save changes to user
+        // Retrieve room details
+        const room = yield Room_1.default.findById(roomId);
+        // Identify user in room participants
+        const userIndex = room.participants.indexOf(uid);
+        console.log("Participant Index:", userIndex);
+        // Remove user from room participants
+        if (userIndex > -1)
+            room.participants.splice(userIndex, 1);
+        if (room.participants.length > 0) {
+            // Notify remaining participants in the room
+            const roomMesssage = yield Message_1.default.create({
+                content: `${user.username} is no longer your friend. To start a conversation, send friend request.`,
+            });
+            room.messages.push(roomMesssage._id);
+            yield room.save(); // Save changes to room
+        }
+        else {
+            // Delete room if empty
+            yield Room_1.default.findByIdAndDelete(roomId);
+        }
+        return response_codes_1.default.success(res, { user, room }, "Friend Removed");
     }
     catch (error) {
-        console.error(error);
-        return response_codes_1.default.internalServerError(res, "Failed");
+        console.error("Error:", error);
+        return response_codes_1.default.internalServerError(res, "Failed to remove friend");
     }
 });
 exports.removeFriend = removeFriend;

@@ -44,7 +44,7 @@ import friendsRouter from "./src/routes/friend";
 import messagesRouter from "./src/routes/message";
 
 app.use("/auth", authRouter);
-app.use("/users/chats", messagesRouter);
+app.use("/users", messagesRouter);
 
 app.use(verify);
 

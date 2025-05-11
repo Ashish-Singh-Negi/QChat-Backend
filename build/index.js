@@ -36,7 +36,7 @@ dotenv_1.default.config();
 }))();
 // TODO: Config CORS
 app.use((0, cors_1.default)({
-    origin: "http://localhost:3001",
+    origin: process.env.FRONTEND_URL,
     credentials: true,
 }));
 app.use((0, cookie_parser_1.default)());
@@ -47,16 +47,60 @@ const auth_1 = __importDefault(require("./src/routes/auth"));
 const friend_1 = __importDefault(require("./src/routes/friend"));
 const message_1 = __importDefault(require("./src/routes/message"));
 app.use("/auth", auth_1.default);
-app.use("/users/chat", message_1.default);
+app.use("/users", message_1.default);
 app.use(verify_1.verify);
 app.use("/users", friend_1.default);
+app.post("/user/friends/notifications", (req, res) => {
+    try {
+        const { notification } = req.body;
+        console.log("NOTIFICATION : ", notification);
+        return response_codes_1.default.success(res, { notification }, "Notification");
+    }
+    catch (error) {
+        console.error(error);
+        return response_codes_1.default.internalServerError(res, "Notifications Internal Sever Error");
+    }
+});
+app.get("/users", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        const { username } = req.query;
+        if (!username)
+            return response_codes_1.default.badRequest(res, "username is required");
+        const users = yield User_1.default.find()
+            .select("-password -blacklist -friendRequestList -email -favouritesContactList -starMessages")
+            .lean();
+        console.log("Users : ", users);
+        const usernames = users.filter((user) => {
+            if (user.username.toLowerCase().startsWith(username)) {
+                return user.username;
+            }
+        });
+        if (!usernames)
+            return response_codes_1.default.notFound(res, "username not found");
+        return response_codes_1.default.success(res, usernames, "Founded");
+    }
+    catch (error) {
+        console.error(error);
+        return response_codes_1.default.internalServerError(res, "Search Internal Sever Error");
+    }
+}));
 app.get("/users/profile", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         console.log(req.url);
         const uid = req.uid;
-        console.log(req.query);
-        console.log("Params : ", req.params);
-        console.log(uid);
+        const { filter } = req.query;
+        console.log("Filter ", filter);
+        if (filter) {
+            if (typeof filter === "string") {
+                try {
+                    const data = yield User_1.default.findById(uid).select(`${filter} -_id`);
+                    return response_codes_1.default.success(res, data, "filtered profile success");
+                }
+                catch (error) {
+                    console.error(error);
+                }
+            }
+        }
         const userProfile = yield User_1.default.findById(uid).select("-password").exec();
         if (!userProfile)
             return response_codes_1.default.redirect(res, "/login", "Unauthorized");
@@ -67,9 +111,9 @@ app.get("/users/profile", (req, res) => __awaiter(void 0, void 0, void 0, functi
         return response_codes_1.default.internalServerError(res, "Internal Server Error :(");
     }
 }));
-app.get("/users/friends", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+app.get("/users/friends/:fid", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
-        const fid = req.query.fid;
+        const { fid } = req.params;
         const friendProfile = yield User_1.default.findById(fid).select("-password").exec();
         if (!friendProfile)
             return response_codes_1.default.redirect(res, "/login", "Unauthorized");
@@ -90,7 +134,7 @@ const wss = new ws_2.WebSocketServer({ server, path: "/chat" });
 const rooms = {};
 const storeMessage = (messageData) => __awaiter(void 0, void 0, void 0, function* () {
     try {
-        const { data } = yield axios_1.default.post("http://localhost:3000/users/chat/messages", messageData, {
+        const { data } = yield axios_1.default.post(`${process.env.BACKEND_URL}/users/chats/messages`, messageData, {
             withCredentials: true,
         });
         console.log("RESPONSE : ", data);

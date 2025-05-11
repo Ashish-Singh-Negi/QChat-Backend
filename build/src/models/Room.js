@@ -45,10 +45,24 @@ const RoomSchema = new mongoose_1.Schema({
         default: [],
         ref: "Message",
     },
+    roomMessages: {
+        type: [mongoose_1.default.Schema.Types.ObjectId],
+        deflate: [],
+        ref: "RoomMessage",
+    },
     pinMessages: {
         type: [mongoose_1.default.Schema.Types.ObjectId],
         default: [],
         ref: "Message",
+    },
+    muteNotification: {
+        type: Boolean,
+        default: false,
+    },
+    disappearingMessages: {
+        type: String,
+        enum: ["24h", "7d", "1m", "OFF"],
+        default: "OFF",
     },
 }, {
     timestamps: true,

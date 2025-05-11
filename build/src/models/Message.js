@@ -39,11 +39,13 @@ const MessageSchema = new mongoose_1.Schema({
         type: mongoose_1.default.Schema.Types.ObjectId,
         require: true,
         ref: "User",
+        default: null,
     },
     receiverId: {
         type: mongoose_1.default.Schema.Types.ObjectId,
         require: true,
         ref: "User",
+        default: null,
     },
     content: {
         type: String,
@@ -54,6 +56,10 @@ const MessageSchema = new mongoose_1.Schema({
         default: false,
     },
     isPinned: {
+        type: Boolean,
+        default: false,
+    },
+    isStar: {
         type: Boolean,
         default: false,
     },

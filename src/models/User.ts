@@ -1,9 +1,15 @@
 import mongoose, { models, Schema } from "mongoose";
 
-const FriendListSchema = new Schema(
+const ContactListSchema = new Schema(
   {
-    contactId: mongoose.Schema.Types.ObjectId,
-    roomId: mongoose.Schema.Types.ObjectId,
+    contactId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+    },
+    roomId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Room",
+    },
   },
   {
     _id: false,
@@ -49,8 +55,13 @@ const UserSchema = new Schema(
       default: [],
       ref: "User",
     },
+    contactList: {
+      type: [ContactListSchema],
+      default: [],
+      ref: "User",
+    },
     friendList: {
-      type: [FriendListSchema],
+      type: [mongoose.Schema.Types.ObjectId],
       default: [],
       ref: "User",
     },
@@ -59,6 +70,11 @@ const UserSchema = new Schema(
       default: [],
       ref: "User",
     },
+    // invitations: {
+    //   type: [mongoose.Schema.Types.ObjectId],
+    //   default: [],
+    //   ref: "User",
+    // },
     favouritesContactList: {
       type: [mongoose.Schema.Types.ObjectId],
       default: [],

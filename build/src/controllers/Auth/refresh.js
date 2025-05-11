@@ -77,10 +77,14 @@ const refresh = (req, res, next) => __awaiter(void 0, void 0, void 0, function* 
         res.cookie("access-token", accessToken, {
             httpOnly: true,
             maxAge: ACCESS_TOKEN_EXP,
+            sameSite: "none",
+            secure: true
         });
         res.cookie("refresh-token", refreshToken, {
             httpOnly: true,
             maxAge: REFRESH_TOKEN_EXP,
+            sameSite: "none",
+            secure: true
         });
         return response_codes_1.default.created(res, {
             message: "New Tokens Created",

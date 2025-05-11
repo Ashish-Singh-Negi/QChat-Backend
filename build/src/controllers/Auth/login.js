@@ -57,10 +57,14 @@ const login = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
         res.cookie("access-token", accessToken, {
             httpOnly: true,
             maxAge: ACCESS_TOKEN_EXP,
+            sameSite: "none",
+            secure: true
         });
         res.cookie("refresh-token", refreshToken, {
             httpOnly: true,
             maxAge: REFRESH_TOKEN_EXP,
+            sameSite: "none",
+            secure: true
         });
         response_codes_1.default.success(res, userDetails, "Login Succcessful");
     }

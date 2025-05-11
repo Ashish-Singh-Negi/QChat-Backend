@@ -12,55 +12,97 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.deleteChatMessages = exports.deleteMessageForMe = exports.deleteMessageForEveryone = exports.updateMessage = exports.sendMessage = exports.getMessages = void 0;
+exports.deleteChatMessages = exports.deleteMessageForMe = exports.deleteMessageForEveryone = exports.updateMessage = exports.sendMessage = exports.getMessage = exports.getMessages = void 0;
 const response_codes_1 = __importDefault(require("../../utils/response-codes"));
 const Message_1 = __importDefault(require("../../models/Message"));
 const Room_1 = __importDefault(require("../../models/Room"));
+const User_1 = __importDefault(require("../../models/User"));
 const getMessages = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
-        console.log(req.query);
-        const chatRoomId = req.query.crid;
-        // console.log(" ChatRoomID is : ", chatRoomId);
-        if (!chatRoomId)
-            return response_codes_1.default.badRequest(res, "chatRoomId is Request");
-        const chatRoom = yield Room_1.default.findById(chatRoomId).populate("messages");
-        if (!chatRoom)
-            return response_codes_1.default.notFound(res, "No chats exists");
-        response_codes_1.default.success(res, chatRoom.messages, "Success");
+        const { crid } = req.params;
+        const { filter } = req.query;
+        console.log("CRID:", crid);
+        if (!crid) {
+            return response_codes_1.default.badRequest(res, "Chat Room ID is required to fetch messages.");
+        }
+        let chatRoom;
+        // If a filter is provided, fetch the chat room with selected fields and populate related messages
+        if (filter) {
+            chatRoom = yield Room_1.default.findById(crid)
+                .select(`${filter}`)
+                .populate("messages");
+            // .populate("roomMessages");
+            console.log("Filtered:", chatRoom);
+        }
+        else {
+            chatRoom = yield Room_1.default.findById(crid).exec();
+        }
+        if (!chatRoom) {
+            return response_codes_1.default.notFound(res, "No conversation found for the given ID.");
+        }
+        // Construct response based on filter presence
+        const responseData = filter
+            ? { messages: chatRoom.messages }
+            : chatRoom;
+        return response_codes_1.default.success(res, responseData, "Messages retrieved successfully.");
     }
     catch (error) {
-        console.log(error);
-        response_codes_1.default.internalServerError(res, "GET Messages : Internal Server Error");
+        console.error("Error fetching messages:", error);
+        return response_codes_1.default.internalServerError(res, "An unexpected error occurred while retrieving messages. Please try again later.");
     }
 });
 exports.getMessages = getMessages;
+const getMessage = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        const { mid } = req.params;
+        console.log("MID:", mid);
+        if (!mid) {
+            return response_codes_1.default.badRequest(res, "Message ID is required to fetch the message.");
+        }
+        // Retrieve the message by its ID
+        const message = yield Message_1.default.findById(mid);
+        if (!message) {
+            return response_codes_1.default.notFound(res, "No message found for the given ID.");
+        }
+        // Respond with the retrieved message
+        return response_codes_1.default.success(res, message, "Message retrieved successfully.");
+    }
+    catch (error) {
+        console.error("Error fetching message:", error);
+        return response_codes_1.default.internalServerError(res, "An unexpected error occurred while retrieving the message. Please try again later.");
+    }
+});
+exports.getMessage = getMessage;
 const sendMessage = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const { _id, content, sender, receiver, room } = req.body;
-        console.log("messageId : ", _id);
+        console.log("Message ID:", _id);
         const message = content.trim();
         if (!message) {
-            response_codes_1.default.badRequest(res, "message is required");
+            return response_codes_1.default.badRequest(res, "Message content cannot be empty.");
         }
-        console.log(" Message : ", message);
-        console.log(" sendTo  : ", receiver);
-        console.log(" sendBy  : ", sender);
+        console.log("Message:", message);
+        console.log("Sent to:", receiver);
+        console.log("Sent by:", sender);
+        // Create the message entry in the database
         const messageDetails = yield Message_1.default.create({
-            _id: _id,
+            _id,
             senderId: sender,
             receiverId: receiver,
             content: message,
         });
+        // Find the chat room and associate the message with it
         const chatRoom = yield Room_1.default.findById(room).exec();
+        if (!chatRoom) {
+            return response_codes_1.default.notFound(res, "Chat room not found.");
+        }
         chatRoom.messages.push(messageDetails._id);
         yield chatRoom.save();
-        response_codes_1.default.success(res, {
-            message: message,
-        }, "Sended Successfuly");
+        return response_codes_1.default.success(res, { message }, "Message sent successfully.");
     }
     catch (error) {
-        console.error(error);
-        response_codes_1.default.internalServerError(res, "POST Message : Internal Server Error");
+        console.error("Error sending message:", error);
+        return response_codes_1.default.internalServerError(res, "An unexpected error occurred while sending the message. Please try again later.");
     }
 });
 exports.sendMessage = sendMessage;
@@ -118,9 +160,11 @@ const updateMessage = (req, res) => __awaiter(void 0, void 0, void 0, function* 
                 }
                 else {
                     const pinMessageId = chatRoom.pinMessages[0];
-                    const pinMessage = yield Message_1.default.findById(pinMessageId).exec();
-                    pinMessage.isPinned = false;
-                    pinMessage.save();
+                    const pinMessage = yield Message_1.default.findById(pinMessageId);
+                    if (pinMessage) {
+                        pinMessage.isPinned = false;
+                        pinMessage.save();
+                    }
                     chatRoom.pinMessages.shift();
                     chatRoom.pinMessages.push(mid);
                     message.isPinned = true;
@@ -136,11 +180,30 @@ const updateMessage = (req, res) => __awaiter(void 0, void 0, void 0, function* 
             break;
         case "STAR":
             try {
-                const { mid } = req.body;
+                const { uid, mid } = req.body;
+                const message = yield Message_1.default.findById(mid).exec();
+                const isStar = message.isStar;
+                const user = yield User_1.default.findById(uid).select("-password").exec();
+                if (isStar) {
+                    console.log("Remove star message");
+                    message.isStar = false;
+                    const index = user.starMessages.indexOf(mid);
+                    user.starMessages.splice(index, 1);
+                }
+                else {
+                    console.log("Add star message");
+                    message.isStar = true;
+                    user.starMessages.push(mid);
+                }
+                yield user.save();
+                yield message.save();
+                return response_codes_1.default.success(res, { message, user }, "Message Stared");
             }
             catch (error) {
                 console.log(error);
+                return response_codes_1.default.internalServerError(res, "Star Internal Server Error");
             }
+            break;
         default:
             break;
     }
@@ -148,7 +211,7 @@ const updateMessage = (req, res) => __awaiter(void 0, void 0, void 0, function* 
 exports.updateMessage = updateMessage;
 const deleteChatMessages = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
-        const { crid } = req.query;
+        const { crid } = req.params;
         console.log("CRID  ", crid);
         if (!crid)
             return response_codes_1.default.badRequest(res, "DELETE Chat Message : Bad Request");
@@ -171,7 +234,7 @@ const deleteChatMessages = (req, res) => __awaiter(void 0, void 0, void 0, funct
 exports.deleteChatMessages = deleteChatMessages;
 const deleteMessageForEveryone = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
-        const { mid } = req.body;
+        const { mid } = req.params;
         console.log("MID : ", mid);
         if (!mid)
             return response_codes_1.default.badRequest(res, "DELETE Message : Bad Request");
@@ -188,7 +251,7 @@ const deleteMessageForEveryone = (req, res) => __awaiter(void 0, void 0, void 0,
 exports.deleteMessageForEveryone = deleteMessageForEveryone;
 const deleteMessageForMe = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
-        const { mid } = req.body;
+        const { mid } = req.params;
         console.log(mid);
         if (!mid)
             return response_codes_1.default.badRequest(res, "DELETE Message for Me : Bad Request");

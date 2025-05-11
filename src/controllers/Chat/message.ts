@@ -9,19 +9,54 @@ import User from "../../models/User";
 const getMessages = async (req: Request, res: Response) => {
   try {
     const { crid } = req.params;
+    const { filter } = req.query;
 
-    console.log("CRID : ", crid);
+    console.log("CRID:", crid);
 
-    if (!crid) return httpStatus.badRequest(res, "crid is Required");
+    if (!crid) {
+      return httpStatus.badRequest(
+        res,
+        "Chat Room ID is required to fetch messages."
+      );
+    }
 
-    const chatRoom = await Room.findById(crid).populate("messages");
+    let chatRoom;
 
-    if (!chatRoom) return httpStatus.notFound(res, "No chats exists");
+    // If a filter is provided, fetch the chat room with selected fields and populate related messages
+    if (filter) {
+      chatRoom = await Room.findById(crid)
+        .select(`${filter}`)
+        .populate("messages")
+        // .populate("roomMessages");
 
-    httpStatus.success(res, chatRoom.messages, "Success");
+      console.log("Filtered:", chatRoom);
+    } else {
+      chatRoom = await Room.findById(crid).exec();
+    }
+
+    if (!chatRoom) {
+      return httpStatus.notFound(
+        res,
+        "No conversation found for the given ID."
+      );
+    }
+
+    // Construct response based on filter presence
+    const responseData = filter
+      ? { messages: chatRoom.messages}
+      : chatRoom;
+
+    return httpStatus.success(
+      res,
+      responseData,
+      "Messages retrieved successfully."
+    );
   } catch (error) {
-    console.log(error);
-    httpStatus.internalServerError(res, "GET Messages : Internal Server Error");
+    console.error("Error fetching messages:", error);
+    return httpStatus.internalServerError(
+      res,
+      "An unexpected error occurred while retrieving messages. Please try again later."
+    );
   }
 };
 
@@ -29,18 +64,30 @@ const getMessage = async (req: Request, res: Response) => {
   try {
     const { mid } = req.params;
 
-    console.log("MID", mid);
+    console.log("MID:", mid);
 
-    if (!mid) return httpStatus.badRequest(res, "mid is Required");
+    if (!mid) {
+      return httpStatus.badRequest(
+        res,
+        "Message ID is required to fetch the message."
+      );
+    }
 
+    // Retrieve the message by its ID
     const message = await Message.findById(mid);
 
-    if (!message) return httpStatus.notFound(res, "Message Not Found");
+    if (!message) {
+      return httpStatus.notFound(res, "No message found for the given ID.");
+    }
 
-    httpStatus.success(res, message, "Success");
+    // Respond with the retrieved message
+    return httpStatus.success(res, message, "Message retrieved successfully.");
   } catch (error) {
-    console.log(error);
-    httpStatus.internalServerError(res, "GET Message : Internal Server Error");
+    console.error("Error fetching message:", error);
+    return httpStatus.internalServerError(
+      res,
+      "An unexpected error occurred while retrieving the message. Please try again later."
+    );
   }
 };
 
@@ -48,41 +95,43 @@ const sendMessage = async (req: Request, res: Response) => {
   try {
     const { _id, content, sender, receiver, room } = req.body;
 
-    console.log("messageId : ", _id);
+    console.log("Message ID:", _id);
 
     const message = content.trim();
 
     if (!message) {
-      httpStatus.badRequest(res, "message is required");
+      return httpStatus.badRequest(res, "Message content cannot be empty.");
     }
 
-    console.log(" Message : ", message);
-    console.log(" sendTo  : ", receiver);
-    console.log(" sendBy  : ", sender);
+    console.log("Message:", message);
+    console.log("Sent to:", receiver);
+    console.log("Sent by:", sender);
 
+    // Create the message entry in the database
     const messageDetails = await Message.create({
-      _id: _id,
+      _id,
       senderId: sender,
       receiverId: receiver,
       content: message,
     });
 
+    // Find the chat room and associate the message with it
     const chatRoom = await Room.findById(room).exec();
 
-    chatRoom.messages.push(messageDetails._id);
+    if (!chatRoom) {
+      return httpStatus.notFound(res, "Chat room not found.");
+    }
 
+    chatRoom.messages.push(messageDetails._id);
     await chatRoom.save();
 
-    httpStatus.success(
-      res,
-      {
-        message: message,
-      },
-      "Sended Successfuly"
-    );
+    return httpStatus.success(res, { message }, "Message sent successfully.");
   } catch (error) {
-    console.error(error);
-    httpStatus.internalServerError(res, "POST Message : Internal Server Error");
+    console.error("Error sending message:", error);
+    return httpStatus.internalServerError(
+      res,
+      "An unexpected error occurred while sending the message. Please try again later."
+    );
   }
 };
 

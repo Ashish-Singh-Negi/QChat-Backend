@@ -34,9 +34,15 @@ var __importStar = (this && this.__importStar) || (function () {
 })();
 Object.defineProperty(exports, "__esModule", { value: true });
 const mongoose_1 = __importStar(require("mongoose"));
-const FriendListSchema = new mongoose_1.Schema({
-    contactId: mongoose_1.default.Schema.Types.ObjectId,
-    roomId: mongoose_1.default.Schema.Types.ObjectId,
+const ContactListSchema = new mongoose_1.Schema({
+    contactId: {
+        type: mongoose_1.default.Schema.Types.ObjectId,
+        ref: "User",
+    },
+    roomId: {
+        type: mongoose_1.default.Schema.Types.ObjectId,
+        ref: "Room",
+    },
 }, {
     _id: false,
 });
@@ -63,6 +69,11 @@ const UserSchema = new mongoose_1.Schema({
         type: String,
         default: null,
     },
+    starMessages: {
+        type: [mongoose_1.default.Schema.Types.ObjectId],
+        default: [],
+        ref: "Message",
+    },
     following: {
         type: [mongoose_1.default.Schema.Types.ObjectId],
         default: [],
@@ -73,8 +84,13 @@ const UserSchema = new mongoose_1.Schema({
         default: [],
         ref: "User",
     },
+    contactList: {
+        type: [ContactListSchema],
+        default: [],
+        ref: "User",
+    },
     friendList: {
-        type: [FriendListSchema],
+        type: [mongoose_1.default.Schema.Types.ObjectId],
         default: [],
         ref: "User",
     },
@@ -83,6 +99,11 @@ const UserSchema = new mongoose_1.Schema({
         default: [],
         ref: "User",
     },
+    // invitations: {
+    //   type: [mongoose.Schema.Types.ObjectId],
+    //   default: [],
+    //   ref: "User",
+    // },
     favouritesContactList: {
         type: [mongoose_1.default.Schema.Types.ObjectId],
         default: [],

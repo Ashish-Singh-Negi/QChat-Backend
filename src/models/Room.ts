@@ -12,10 +12,24 @@ const RoomSchema = new Schema(
       default: [],
       ref: "Message",
     },
+    roomMessages: {
+      type: [mongoose.Schema.Types.ObjectId],
+      deflate: [],
+      ref: "RoomMessage",
+    },
     pinMessages: {
       type: [mongoose.Schema.Types.ObjectId],
       default: [],
       ref: "Message",
+    },
+    muteNotification: {
+      type: Boolean,
+      default: false,
+    },
+    disappearingMessages: {
+      type: String,
+      enum: ["24h", "7d", "1m", "OFF"],
+      default: "OFF",
     },
   },
   {
