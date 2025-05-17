@@ -100,50 +100,55 @@ const acceptFriendRequest = async (req: Request, res: Response) => {
     // Remove the friend request from the list
     user.friendRequestList.splice(requestIndex, 1);
 
-    console.log("friends Friendlist : ", friend.username, friend.contactList);
+    console.log(
+      "friends Friendlist : ",
+      friend.username,
+      friend.contactRoomList
+    );
 
-    const isRecentRoomExist: {
-      roomId: Types.ObjectId;
-    } =
-      friend.contactList.find(
-        (friend: { contactId: Types.ObjectId }) =>
-          friend.contactId.toString() === uid
-      )     
+    // const isRecentRoomExist: {
+    //   roomId: Types.ObjectId;
+    // } =
+    //   friend.contactRoomList.find(
+    //     (friend: { contactId: Types.ObjectId }) =>
+    //       friend.contactId.toString() === uid
+    //   )
 
-    if (isRecentRoomExist) {
-      // search for existing room
-      const chatRoom = await Room.findById(isRecentRoomExist.roomId);
+    // if (isRecentRoomExist) {
+    //   // search for existing room
+    //   const chatRoom = await Room.findById(isRecentRoomExist.roomId);
 
-      // update chat room participants
-      chatRoom.participants.push(uid);
+    //   // update chat room participants
+    //   chatRoom.participants.push(uid);
 
-      const roomMessage = await Message.create({
-        content: `${user.username} accepted friend request`,
-      });
+    //   const roomMessage = await Message.create({
+    //     content: `${user.username} accepted friend request`,
+    //   });
 
-      chatRoom.messages.push(roomMessage._id);
+    //   chatRoom.messages.push(roomMessage._id);
 
-      await chatRoom.save();
+    //   await chatRoom.save();
 
-      // update user contactList
-      user.contactList.push({
-        contactId: fid,
-        roomId: isRecentRoomExist.roomId,
-      });
+    //   // update user contactList
+    //   user.contactList.push({
+    //     contactId: fid,
+    //     roomId: isRecentRoomExist.roomId,
+    //   });
 
-      user.friendList.push(fid);
-    } else {
-      // Create a chat room for both users
-      const chatRoom = await Room.create({ participants: [uid, fid] });
+    // user.friendList.push(fid);
+    // } else {
 
-      // Update both users' friend lists with chat room reference
-      const newFriendEntry = { contactId: fid, roomId: chatRoom._id };
-      user.contactList.push(newFriendEntry);
-      user.friendList.push(fid);
+    // Create a chat room for both users
+    const chatRoom = await Room.create({ participants: [uid, fid] });
 
-      friend.contactList.push({ contactId: uid, roomId: chatRoom._id });
-      friend.friendList.push(uid);
-    }
+    // Update both users' friend lists with chat room reference
+    // const newFriendEntry = { contactId: fid, roomId: chatRoom._id };
+    user.contactRoomList.push(chatRoom._id);
+    user.friendList.push(fid);
+
+    friend.contactRoomList.push(chatRoom._id);
+    friend.friendList.push(uid);
+    // }
 
     // Save updates
     await user.save();

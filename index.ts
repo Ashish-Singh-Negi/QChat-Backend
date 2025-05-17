@@ -42,6 +42,8 @@ import { verify } from "./src/middleware/verify";
 import authRouter from "./src/routes/auth";
 import friendsRouter from "./src/routes/friend";
 import messagesRouter from "./src/routes/message";
+import chatRoomInfoRouter from "./src/routes/chat";
+import userRouter from "./src/routes/user";
 
 app.use("/auth", authRouter);
 app.use("/users", messagesRouter);
@@ -49,6 +51,8 @@ app.use("/users", messagesRouter);
 app.use(verify);
 
 app.use("/users", friendsRouter);
+app.use("/users", chatRoomInfoRouter);
+app.use("/users", userRouter);
 
 app.post("/user/friends/notifications", (req: Request, res: Response) => {
   try {
@@ -86,45 +90,13 @@ app.get("/users", async (req: Request, res: Response) => {
       }
     });
 
-    if (!usernames) return httpStatus.notFound(res, "username not found");
+    if (!usernames.length)
+      return httpStatus.notFound(res, "username not found");
 
     return httpStatus.success(res, usernames, "Founded");
   } catch (error) {
     console.error(error);
     return httpStatus.internalServerError(res, "Search Internal Sever Error");
-  }
-});
-
-app.get("/users/profile", async (req: Request, res: Response) => {
-  try {
-    console.log(req.url);
-
-    const uid = req.uid;
-
-    const { filter } = req.query;
-
-    console.log("Filter ", filter);
-
-    if (filter) {
-      if (typeof filter === "string") {
-        try {
-          const data = await User.findById(uid).select(`${filter} -_id`);
-
-          return httpStatus.success(res, data, "filtered profile success");
-        } catch (error) {
-          console.error(error);
-        }
-      }
-    }
-
-    const userProfile = await User.findById(uid).select("-password").exec();
-
-    if (!userProfile) return httpStatus.redirect(res, "/login", "Unauthorized");
-
-    return httpStatus.success(res, userProfile, "Profile Found");
-  } catch (error) {
-    console.error(error);
-    return httpStatus.internalServerError(res, "Internal Server Error :(");
   }
 });
 

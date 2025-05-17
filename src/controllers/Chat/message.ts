@@ -1,4 +1,4 @@
-import { Request, Response } from "express";
+import { query, Request, Response } from "express";
 
 import httpStatus from "../../utils/response-codes";
 
@@ -9,8 +9,6 @@ import User from "../../models/User";
 const getMessages = async (req: Request, res: Response) => {
   try {
     const { crid } = req.params;
-    const { filter } = req.query;
-
     console.log("CRID:", crid);
 
     if (!crid) {
@@ -20,35 +18,15 @@ const getMessages = async (req: Request, res: Response) => {
       );
     }
 
-    let chatRoom;
+    const messages = await Room.findById(crid)
+      .select(`messages`)
+      .populate("messages");
 
-    // If a filter is provided, fetch the chat room with selected fields and populate related messages
-    if (filter) {
-      chatRoom = await Room.findById(crid)
-        .select(`${filter}`)
-        .populate("messages")
-        // .populate("roomMessages");
-
-      console.log("Filtered:", chatRoom);
-    } else {
-      chatRoom = await Room.findById(crid).exec();
-    }
-
-    if (!chatRoom) {
-      return httpStatus.notFound(
-        res,
-        "No conversation found for the given ID."
-      );
-    }
-
-    // Construct response based on filter presence
-    const responseData = filter
-      ? { messages: chatRoom.messages}
-      : chatRoom;
+    console.log("Filtered:", messages);
 
     return httpStatus.success(
       res,
-      responseData,
+      messages,
       "Messages retrieved successfully."
     );
   } catch (error) {
@@ -268,7 +246,7 @@ const updateMessage = async (req: Request, res: Response) => {
       }
       break;
 
-    default:
+    default: return httpStatus.badRequest(res, `Invalid ACTION`)
       break;
   }
 };
@@ -276,19 +254,86 @@ const updateMessage = async (req: Request, res: Response) => {
 const deleteChatMessages = async (req: Request, res: Response) => {
   try {
     const { crid } = req.params;
+    const { action, duration } = req.query;
 
-    console.log("CRID  ", crid);
+    console.log(duration);
+    console.log(req.query);
 
     if (!crid)
       return httpStatus.badRequest(res, "DELETE Chat Message : Bad Request");
 
+    /**
+     *  DISAPPEAR_MESSAGES
+     *  delete those messages & referances of messages from chat room,
+     *  who has exceeded the duration of disapperingMessages duration set by users
+     *
+     */
+
+    if (action === "DISAPPEAR_MESSAGES") {
+      const chatRoom = await Room.findById(crid).populate("messages");
+
+      console.log(chatRoom);
+
+      const messages = chatRoom.messages;
+      const currentTime = new Date().getTime();
+      let messagesToDisappearAre = [];
+
+      // time constants in milliseconds
+      const ONE_DAY_IN_MILLI_SECONDS = 1000 * 60 * 60 * 24;
+      const SEVEN_DAY_IN_MILLI_SECONDS = 1000 * 60 * 60 * 24 * 7;
+      const ONE_MONTH_IN_MILLI_SECONDS = 1000 * 60 * 60 * 24 * 30;
+
+      let durationInMS;
+
+      if (duration === "24h") {
+        durationInMS = ONE_DAY_IN_MILLI_SECONDS;
+      } else if (duration === "7d") {
+        durationInMS = SEVEN_DAY_IN_MILLI_SECONDS;
+      } else if (duration === "1m") {
+        durationInMS = ONE_MONTH_IN_MILLI_SECONDS;
+      }
+
+      for (let i = 0; i < messages.length; i++) {
+        console.log(messages[i].createdAt);
+
+        const messageTime = new Date(messages[i].createdAt).getTime();
+        const messageCreatedTimeInMS = currentTime - messageTime;
+
+        console.log(
+          currentTime,
+          " - ",
+          messageTime,
+          " = ",
+          messageCreatedTimeInMS,
+          ONE_DAY_IN_MILLI_SECONDS
+        );
+
+        if (messageCreatedTimeInMS > durationInMS!) {
+          messagesToDisappearAre.push(messages[i]._id);
+          messages.splice(i, 1);
+        }
+      }
+
+      console.log("Disapper messages Are : ", messagesToDisappearAre);
+
+      await Message.deleteMany({
+        _id: {
+          $in: messagesToDisappearAre,
+        },
+      });
+
+      await chatRoom.save();
+
+      return httpStatus.noContent(res);
+    }
+
     const room = await Room.findById(crid).exec();
+    const messageIDs = room.messages;
 
-    let messages = room.messages;
-
+    // Delete all messages
     await Message.deleteMany({
       _id: {
-        $in: messages,
+        $in: messageIDs,
       },
     });
 
@@ -296,7 +341,7 @@ const deleteChatMessages = async (req: Request, res: Response) => {
 
     await room.save();
 
-    httpStatus.noContent(res);
+    return httpStatus.noContent(res);
   } catch (error) {
     console.log(error);
     httpStatus.internalServerError(

@@ -1,20 +1,20 @@
 import mongoose, { models, Schema } from "mongoose";
 
-const ContactListSchema = new Schema(
-  {
-    contactId: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "User",
-    },
-    roomId: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "Room",
-    },
-  },
-  {
-    _id: false,
-  }
-);
+// const ContactListSchema = new Schema(
+//   {
+//     contactId: {
+//       type: mongoose.Schema.Types.ObjectId,
+//       ref: "User",
+//     },
+//     roomId: {
+//       type: mongoose.Schema.Types.ObjectId,
+//       ref: "Room",
+//     },
+//   },
+//   {
+//     _id: false,
+//   }
+// );
 
 const UserSchema = new Schema(
   {
@@ -55,10 +55,10 @@ const UserSchema = new Schema(
       default: [],
       ref: "User",
     },
-    contactList: {
-      type: [ContactListSchema],
+    contactRoomList: {
+      type: [mongoose.Schema.Types.ObjectId],
       default: [],
-      ref: "User",
+      ref: "Room",
     },
     friendList: {
       type: [mongoose.Schema.Types.ObjectId],
@@ -70,11 +70,6 @@ const UserSchema = new Schema(
       default: [],
       ref: "User",
     },
-    // invitations: {
-    //   type: [mongoose.Schema.Types.ObjectId],
-    //   default: [],
-    //   ref: "User",
-    // },
     favouritesContactList: {
       type: [mongoose.Schema.Types.ObjectId],
       default: [],
@@ -84,6 +79,11 @@ const UserSchema = new Schema(
       default: [],
       ref: "user",
     },
+    // invitations: {
+    //   type: [mongoose.Schema.Types.ObjectId],
+    //   default: [],
+    //   ref: "User",
+    // },
     // access_token: String,
     // refresh_token: String,
     // access_token_expiry: String,
