@@ -5,6 +5,7 @@ import httpStatus from "../../utils/response-codes";
 import Message from "../../models/Message";
 import Room from "../../models/Room";
 import User from "../../models/User";
+import mongoose from "mongoose";
 
 const getMessages = async (req: Request, res: Response) => {
   try {
@@ -114,140 +115,166 @@ const sendMessage = async (req: Request, res: Response) => {
 };
 
 const updateMessage = async (req: Request, res: Response) => {
-  const { action } = req.body;
+  try {
+    const { mid, newContent } = req.body;
 
-  switch (action) {
-    case "EDIT":
-      try {
-        const { mid, newContent } = req.body;
+    if (!mid || !newContent)
+      return httpStatus.badRequest(res, "Update Message : Bad Request");
 
-        if (!mid || !newContent)
-          return httpStatus.badRequest(res, "Update Message : Bad Request");
+    console.log("MID : ", mid, "NEW Content : ", newContent);
 
-        console.log("MID : ", mid, "NEW Content : ", newContent);
+    const message = await Message.findById(mid).select("__v").exec();
+    if (!message) return httpStatus.notFound(res, "Message No longer exit");
 
-        const message = await Message.findById(mid).select("-v").exec();
+    message.content = newContent;
+    message.isEdited = true;
 
-        if (!message) return httpStatus.notFound(res, "Message No longer exit");
+    await message.save();
 
-        message.content = newContent;
-        message.isEdited = true;
+    return httpStatus.success(res, { message }, "Message Updated");
+  } catch (error) {
+    console.log(error);
+    return httpStatus.internalServerError(
+      res,
+      "update MESSAGE Internal Server Error"
+    );
+  }
+};
 
-        message.save();
+const updatePinnedMessage = async (req: Request, res: Response) => {
+  const session = await mongoose.startSession();
+  session.startTransaction();
 
-        httpStatus.success(res, { message }, "Message Updated");
-      } catch (error) {
-        console.log(error);
-        httpStatus.internalServerError(
-          res,
-          "update MESSAGE Internal Server Error"
+  try {
+    const { crid, mid } = req.params;
+
+    console.log("CRID : ", crid, "MID : ", mid);
+
+    if (!mid || !crid) {
+      await session.abortTransaction();
+      return httpStatus.badRequest(res, "Update Message : Bad Request");
+    }
+
+    const message = await Message.findById(mid).session(session);
+    if (!message) {
+      await session.abortTransaction();
+      return httpStatus.notFound(res, "Message no longer exists");
+    }
+
+    const chatRoom = await Room.findById(crid).session(session);
+    if (!chatRoom) {
+      await session.abortTransaction();
+      return httpStatus.notFound(res, "Chat room not found");
+    }
+
+    const isPinnedIndex = chatRoom.pinMessages.indexOf(mid);
+    const pinMessagesCount = chatRoom.pinMessages.length;
+
+    if (isPinnedIndex >= 0) {
+      // Unpin
+      chatRoom.pinMessages.splice(isPinnedIndex, 1);
+      message.isPinned = false;
+    } else {
+      // Pin
+      if (pinMessagesCount >= 3) {
+        const pinMessageId = chatRoom.pinMessages.shift(); // Remove oldest
+
+        const pinMessage = await Message.findById(pinMessageId).session(
+          session
         );
-      }
-      break;
-
-    case "PIN":
-      try {
-        const { mid, crid } = req.body;
-
-        if (!mid || !crid)
-          return httpStatus.badRequest(res, "Update Message : Bad Request");
-
-        console.log("MID : ", mid);
-
-        // Search for message
-        const message = await Message.findById(mid).select("-v").exec();
-        if (!message) return httpStatus.notFound(res, "Message No longer exit");
-
-        // Search for ChatRoom
-        const chatRoom = await Room.findById(crid).select("-v").exec();
-
-        // Store pinned message count/length
-        const pinMessagesCount = chatRoom.pinMessages.length;
-
-        // Store pinned message index
-        const isPinnedIndex = chatRoom.pinMessages.indexOf(mid);
-
-        console.log("IS Pinned : ", isPinnedIndex);
-
-        // if pinned message exist in pinMessages array
-        // than remove it And set it false
-        if (isPinnedIndex >= 0) {
-          chatRoom.pinMessages.splice(isPinnedIndex, 1);
-          message.isPinned = false;
-
-          chatRoom.save();
-          message.save();
-
-          return httpStatus.success(res, { message }, "Message Updated");
+        if (pinMessage) {
+          pinMessage.isPinned = false;
+          await pinMessage.save({ session });
         }
-
-        if (pinMessagesCount < 3) {
-          chatRoom.pinMessages.push(mid);
-          message.isPinned = true;
-        } else {
-          const pinMessageId = chatRoom.pinMessages[0];
-
-          const pinMessage = await Message.findById(pinMessageId);
-
-          if (pinMessage) {
-            pinMessage.isPinned = false;
-            pinMessage.save();
-          }
-
-          chatRoom.pinMessages.shift();
-          chatRoom.pinMessages.push(mid);
-          message.isPinned = true;
-        }
-
-        chatRoom.save();
-        message.save();
-
-        httpStatus.success(res, { message }, "Message Updated");
-      } catch (error) {
-        console.log(error);
-        httpStatus.internalServerError(
-          res,
-          "update MESSAGE Internal Server Error"
-        );
       }
-      break;
 
-    case "STAR":
-      try {
-        const { uid, mid } = req.body;
+      chatRoom.pinMessages.push(mid);
+      message.isPinned = true;
+    }
 
-        const message = await Message.findById(mid).exec();
-        const isStar = message.isStar;
+    await chatRoom.save({ session });
+    await message.save({ session });
 
-        const user = await User.findById(uid).select("-password").exec();
+    await session.commitTransaction();
+    session.endSession();
 
-        if (isStar) {
-          console.log("Remove star message");
-          message.isStar = false;
+    return httpStatus.success(res, { message }, "Message Updated");
+  } catch (error) {
+    console.error("Error in pin/unpin message:", error);
+    await session.abortTransaction();
+    session.endSession();
+    return httpStatus.internalServerError(
+      res,
+      "Update Message Internal Server Error"
+    );
+  }
+};
 
-          const index = user.starMessages.indexOf(mid);
-          user.starMessages.splice(index, 1);
-        } else {
-          console.log("Add star message");
-          message.isStar = true;
-          user.starMessages.push(mid);
-        }
+const updateStarMessage = async (req: Request, res: Response) => {
+  const session = await mongoose.startSession();
+  session.startTransaction();
 
-        await user.save();
-        await message.save();
+  try {
+    const { mid } = req.params;
+    const { uid } = req.body;
 
-        return httpStatus.success(res, { message, user }, "Message Stared");
-      } catch (error) {
-        console.log(error);
-        return httpStatus.internalServerError(
-          res,
-          "Star Internal Server Error"
-        );
+    console.log(uid, mid);
+
+    if (!uid || !mid) {
+      await session.abortTransaction();
+      session.endSession();
+      return httpStatus.badRequest(res, "User ID and Message ID are required");
+    }
+
+    // Fetch message and user within the session
+    const message = await Message.findById(mid).session(session);
+    if (!message) {
+      await session.abortTransaction();
+      session.endSession();
+      return httpStatus.notFound(res, "Message not found");
+    }
+
+    const user = await User.findById(uid).select("-password").session(session);
+    if (!user) {
+      await session.abortTransaction();
+      session.endSession();
+      return httpStatus.notFound(res, "User not found");
+    }
+
+    if (message.isStar) {
+      console.log("Unstarring message");
+      message.isStar = false;
+
+      const index = user.starMessages.indexOf(mid);
+      if (index !== -1) {
+        user.starMessages.splice(index, 1);
       }
-      break;
+    } else {
+      console.log("Starring message");
+      message.isStar = true;
 
-    default: return httpStatus.badRequest(res, `Invalid ACTION`)
-      break;
+      if (!user.starMessages.includes(mid)) {
+        user.starMessages.push(mid);
+      }
+    }
+
+    await user.save({ session });
+    await message.save({ session });
+
+    await session.commitTransaction();
+    session.endSession();
+
+    return httpStatus.success(
+      res,
+      { message, user },
+      "Message starred/unstarred successfully"
+    );
+  } catch (error) {
+    await session.abortTransaction();
+    session.endSession();
+
+    console.error("Star toggle error:", error);
+    return httpStatus.internalServerError(res, "Star toggle failed");
   }
 };
 
@@ -405,6 +432,8 @@ export {
   getMessage,
   sendMessage,
   updateMessage,
+  updatePinnedMessage,
+  updateStarMessage,
   deleteMessageForEveryone,
   deleteMessageForMe,
   deleteChatMessages,

@@ -1,74 +1,62 @@
 import { Request, Response } from "express";
 import httpStatus from "../../utils/response-codes";
 import User from "../../models/User";
-import Room from "../../models/Room";
-import { Types } from "mongoose";
-import Message from "../../models/Message";
 
 const removeFriend = async (req: Request, res: Response) => {
   try {
     const { fid } = req.params;
     const uid = req.uid;
 
-    if (!fid) return httpStatus.badRequest(res, "Invalid Friend ID");
-
-    // Retrieve user and exclude password
-    const user = await User.findById(uid).select("-password");
-    console.log("User:", user);
-
-    // Locate friend in user's contact list
-    const contactIndex = user.contactList.findIndex(
-      (friend: { contactId: Types.ObjectId }) =>
-        friend.contactId.toString() === fid
-    );
-
-    if (contactIndex === -1)
-      return httpStatus.notFound(res, "contact already removed");
-
-    const friendIndex = user.friendList.findIndex(
-      (friend: Types.ObjectId) => friend.toString() === fid
-    );
-
-    if (friendIndex === -1)
-      return httpStatus.notFound(res, "Friend already removed");
-
-    // Extract roomId for future use
-    const { roomId } = user.contactList[contactIndex];
-
-    // Remove friend from the friend list & contact list
-    user.friendList.splice(friendIndex, 1);
-    user.contactList.splice(contactIndex, 1);
-
-    await user.save(); // Save changes to user
-
-    // Retrieve room details
-    const room = await Room.findById(roomId);
-
-    // Identify user in room participants
-    const userIndex = room.participants.indexOf(uid);
-    console.log("Participant Index:", userIndex);
-
-    // Remove user from room participants
-    if (userIndex > -1) room.participants.splice(userIndex, 1);
-
-    if (room.participants.length > 0) {
-      // Notify remaining participants in the room
-      const roomMesssage = await Message.create({
-        content: `${user.username} is no longer your friend. To start a conversation, send friend request.`,
-      });
-
-      room.messages.push(roomMesssage._id);
-
-      await room.save(); // Save changes to room
-    } else {
-      // Delete room if empty
-      await Room.findByIdAndDelete(roomId);
+    if (!fid) {
+      return httpStatus.badRequest(res, "Friend ID is required.");
     }
 
-    return httpStatus.success(res, { user, room }, "Friend Removed");
+    // Fetch user and friend details while excluding unnecessary fields
+    const user = await User.findById(uid).select(
+      "-password -contactRoomList -createdAt -updatedAt -profilePic"
+    );
+    if (!user) {
+      return httpStatus.notFound(res, "User not found.");
+    }
+
+    const friend = await User.findById(fid).select(
+      "-password -contactRoomList -createdAt -updatedAt -profilePic"
+    );
+    if (!friend) {
+      return httpStatus.notFound(res, "Friend not found.");
+    }
+
+    // Remove friend ID from user's friend list
+    const friendIndex = user.friendList.indexOf(fid);
+    if (friendIndex === -1) {
+      return httpStatus.notFound(
+        res,
+        "Friend is not in the user's friend list."
+      );
+    }
+    user.friendList.splice(friendIndex, 1);
+
+    // Remove user ID from friend's friend list
+    const userIndex = friend.friendList.indexOf(uid);
+    if (userIndex === -1) {
+      return httpStatus.notFound(
+        res,
+        "User is not in the friend's friend list."
+      );
+    }
+    friend.friendList.splice(userIndex, 1);
+
+    // all right, save it
+    await user.save();
+    await friend.save();
+
+    return httpStatus.noContent(res);
   } catch (error) {
-    console.error("Error:", error);
-    return httpStatus.internalServerError(res, "Failed to remove friend");
+    console.error("Error removing friend:", error);
+    return httpStatus.internalServerError(
+      res,
+      "An error occurred while removing the friend."
+    );
   }
 };
 

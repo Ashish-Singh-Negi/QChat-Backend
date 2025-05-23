@@ -40,21 +40,25 @@ const UserSchema = new Schema(
       type: String,
       default: null,
     },
+    isOnline: {
+      type: Boolean,
+      default: false,
+    },
     starMessages: {
       type: [mongoose.Schema.Types.ObjectId],
       default: [],
       ref: "Message",
     },
-    following: {
-      type: [mongoose.Schema.Types.ObjectId],
-      default: [],
-      ref: "User",
-    },
-    followers: {
-      type: [mongoose.Schema.Types.ObjectId],
-      default: [],
-      ref: "User",
-    },
+    // following: {
+    //   type: [mongoose.Schema.Types.ObjectId],
+    //   default: [],
+    //   ref: "User",
+    // },
+    // followers: {
+    //   type: [mongoose.Schema.Types.ObjectId],
+    //   default: [],
+    //   ref: "User",
+    // },
     contactRoomList: {
       type: [mongoose.Schema.Types.ObjectId],
       default: [],
@@ -68,7 +72,7 @@ const UserSchema = new Schema(
     friendRequestList: {
       type: [mongoose.Schema.Types.ObjectId],
       default: [],
-      ref: "User",
+      ref: "FriendRequest",
     },
     favouritesContactList: {
       type: [mongoose.Schema.Types.ObjectId],

@@ -1,6 +1,7 @@
 import { Router } from "express";
 import {
   acceptFriendRequest,
+  getFriendRequest,
   rejectFriendRequest,
   sendFriendRequest,
 } from "../controllers/Friend/request";
@@ -9,9 +10,11 @@ import { inviteToChatRoom } from "../controllers/Friend/invite";
 
 const router = Router();
 
-router.patch("/friends/request", sendFriendRequest);
-router.patch("/friends/:fid/accept", acceptFriendRequest);
-router.patch("/friends/:fid/reject", rejectFriendRequest);
+router.get("/friends/requests/:rid", getFriendRequest);
+router.post("/friends/requests", sendFriendRequest);
+
+router.patch("/friends/requests/:rid/accept", acceptFriendRequest);
+router.patch("/friends/requests/:rid/reject", rejectFriendRequest);
 
 // Remove user from friend list
 router.patch("/friends/:fid/remove", removeFriend);
