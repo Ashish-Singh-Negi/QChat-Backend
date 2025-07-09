@@ -44,45 +44,39 @@ const UserSchema = new Schema(
       type: Boolean,
       default: false,
     },
-    starMessages: {
-      type: [mongoose.Schema.Types.ObjectId],
-      default: [],
-      ref: "Message",
+    isChatAllowForStrangers: {
+      type: Boolean,
+      default: false,
     },
-    // following: {
-    //   type: [mongoose.Schema.Types.ObjectId],
-    //   default: [],
-    //   ref: "User",
-    // },
-    // followers: {
-    //   type: [mongoose.Schema.Types.ObjectId],
-    //   default: [],
-    //   ref: "User",
-    // },
-    contactRoomList: {
+    chats: {
       type: [mongoose.Schema.Types.ObjectId],
       default: [],
       ref: "Room",
     },
-    friendList: {
+    friends: {
       type: [mongoose.Schema.Types.ObjectId],
       default: [],
       ref: "User",
     },
-    friendRequestList: {
+    friendRequests: {
       type: [mongoose.Schema.Types.ObjectId],
       default: [],
       ref: "FriendRequest",
     },
-    favouritesContactList: {
-      type: [mongoose.Schema.Types.ObjectId],
-      default: [],
-    },
-    blacklist: {
-      type: [mongoose.Schema.Types.ObjectId],
-      default: [],
-      ref: "user",
-    },
+    // starMessages: {
+    //   type: [mongoose.Schema.Types.ObjectId],
+    //   default: [],
+    //   ref: "Message",
+    // },
+    // favouritesContactList: {
+    //   type: [mongoose.Schema.Types.ObjectId],
+    //   default: [],
+    // },
+    // blacklist: {
+    //   type: [mongoose.Schema.Types.ObjectId],
+    //   default: [],
+    //   ref: "user",
+    // },
     // invitations: {
     //   type: [mongoose.Schema.Types.ObjectId],
     //   default: [],

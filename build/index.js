@@ -16,10 +16,19 @@ const express_1 = __importDefault(require("express"));
 const dbconnection_1 = __importDefault(require("./src/utils/dbconnection"));
 const http_1 = __importDefault(require("http"));
 const dotenv_1 = __importDefault(require("dotenv"));
-const axios_1 = __importDefault(require("axios"));
 const cors_1 = __importDefault(require("cors"));
+const routes_1 = __importDefault(require("./src/api/routes"));
+const config_1 = __importDefault(require("./src/config"));
 const cookie_parser_1 = __importDefault(require("cookie-parser"));
 const ws_1 = require("ws");
+const ws_2 = require("ws");
+const errorhandler_1 = require("./src/middlewares/errorhandler");
+const message_1 = __importDefault(require("./src/services/message"));
+const MessageRepository_1 = __importDefault(require("./src/repositories/MessageRepository"));
+const ChatRepository_1 = __importDefault(require("./src/repositories/ChatRepository"));
+const Chat_1 = __importDefault(require("./src/models/Chat"));
+const Message_1 = __importDefault(require("./src/models/Message"));
+const mongodb_1 = require("mongodb");
 const app = (0, express_1.default)();
 // Create an HTTP Server
 const server = http_1.default.createServer(app);
@@ -41,110 +50,15 @@ app.use((0, cors_1.default)({
 }));
 app.use((0, cookie_parser_1.default)());
 app.use(express_1.default.json());
-// Import all Routes
-const verify_1 = require("./src/middleware/verify");
-const auth_1 = __importDefault(require("./src/routes/auth"));
-const friend_1 = __importDefault(require("./src/routes/friend"));
-const message_1 = __importDefault(require("./src/routes/message"));
-app.use("/auth", auth_1.default);
-app.use("/users", message_1.default);
-app.use(verify_1.verify);
-app.use("/users", friend_1.default);
-app.post("/user/friends/notifications", (req, res) => {
-    try {
-        const { notification } = req.body;
-        console.log("NOTIFICATION : ", notification);
-        return response_codes_1.default.success(res, { notification }, "Notification");
-    }
-    catch (error) {
-        console.error(error);
-        return response_codes_1.default.internalServerError(res, "Notifications Internal Sever Error");
-    }
-});
-app.get("/users", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    try {
-        const { username } = req.query;
-        if (!username)
-            return response_codes_1.default.badRequest(res, "username is required");
-        const users = yield User_1.default.find()
-            .select("-password -blacklist -friendRequestList -email -favouritesContactList -starMessages")
-            .lean();
-        console.log("Users : ", users);
-        const usernames = users.filter((user) => {
-            if (user.username.toLowerCase().startsWith(username)) {
-                return user.username;
-            }
-        });
-        if (!usernames)
-            return response_codes_1.default.notFound(res, "username not found");
-        return response_codes_1.default.success(res, usernames, "Founded");
-    }
-    catch (error) {
-        console.error(error);
-        return response_codes_1.default.internalServerError(res, "Search Internal Sever Error");
-    }
-}));
-app.get("/users/profile", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    try {
-        console.log(req.url);
-        const uid = req.uid;
-        const { filter } = req.query;
-        console.log("Filter ", filter);
-        if (filter) {
-            if (typeof filter === "string") {
-                try {
-                    const data = yield User_1.default.findById(uid).select(`${filter} -_id`);
-                    return response_codes_1.default.success(res, data, "filtered profile success");
-                }
-                catch (error) {
-                    console.error(error);
-                }
-            }
-        }
-        const userProfile = yield User_1.default.findById(uid).select("-password").exec();
-        if (!userProfile)
-            return response_codes_1.default.redirect(res, "/login", "Unauthorized");
-        return response_codes_1.default.success(res, userProfile, "Profile Found");
-    }
-    catch (error) {
-        console.error(error);
-        return response_codes_1.default.internalServerError(res, "Internal Server Error :(");
-    }
-}));
-app.get("/users/friends/:fid", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    try {
-        const { fid } = req.params;
-        const friendProfile = yield User_1.default.findById(fid).select("-password").exec();
-        if (!friendProfile)
-            return response_codes_1.default.redirect(res, "/login", "Unauthorized");
-        return response_codes_1.default.success(res, friendProfile, "F Profile Found");
-    }
-    catch (error) {
-        console.error(error);
-        return response_codes_1.default.internalServerError(res, "Internal Server Error :(");
-    }
-}));
-const ws_2 = require("ws");
-const User_1 = __importDefault(require("./src/models/User"));
-const response_codes_1 = __importDefault(require("./src/utils/response-codes"));
-const mongodb_1 = require("mongodb");
+app.use(config_1.default.api.prefix, routes_1.default);
+app.use(errorhandler_1.errorHandler);
 // Create a WebSocket server
 const wss = new ws_2.WebSocketServer({ server, path: "/chat" });
 // Object to store rooms and their clients
 const rooms = {};
-const storeMessage = (messageData) => __awaiter(void 0, void 0, void 0, function* () {
-    try {
-        const { data } = yield axios_1.default.post(`${process.env.BACKEND_URL}/users/chats/messages`, messageData, {
-            withCredentials: true,
-        });
-        console.log("RESPONSE : ", data);
-    }
-    catch (error) {
-        console.error("ERROR : ", error);
-    }
-});
 wss.on("connection", (ws) => {
     console.log("New Ws connected");
+    const messageServiceInstance = new message_1.default(new MessageRepository_1.default(Message_1.default), new ChatRepository_1.default(Chat_1.default));
     ws.on("message", (message) => {
         try {
             const data = JSON.parse(message.toString());
@@ -196,18 +110,12 @@ wss.on("connection", (ws) => {
                     if (data.room && data.content) {
                         const room = rooms[data.room];
                         if (room) {
-                            const messageId = new mongodb_1.ObjectId();
-                            storeMessage({
-                                _id: messageId,
-                                sender: data.sender,
-                                receiver: data.receiver,
-                                room: data.room,
-                                content: data.content,
-                            });
+                            const mid = new mongodb_1.ObjectId();
+                            messageServiceInstance.storeMessage(mid, data.sender, data.receiver, data.content, data.room);
                             room.forEach((client) => {
                                 if (client.readyState === ws_1.WebSocket.OPEN) {
                                     client.send(JSON.stringify({
-                                        _id: messageId,
+                                        _id: mid,
                                         sender: data.sender,
                                         receiver: data.receiver,
                                         content: data.content,

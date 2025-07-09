@@ -1,20 +1,6 @@
 import mongoose, { model, models, Schema } from "mongoose";
 
-interface IFriendRequest extends Document {
-  sender: {
-    username: string;
-    profilePic: string;
-  };
-  recipient: {
-    username: string;
-    profilePic: string;
-  };
-  status: "pending" | "accepted" | "declined";
-  sendAt: Date;
-  respondedAt?: Date;
-}
-
-const FriendRequestSechema = new Schema<IFriendRequest>({
+const FriendRequestSechema = new Schema({
   sender: {
     type: {
       username: String,
@@ -47,10 +33,6 @@ const FriendRequestSechema = new Schema<IFriendRequest>({
 
 const FriendRequest =
   models.FriendRequest ||
-  mongoose.model<IFriendRequest>(
-    "FriendRequest",
-    FriendRequestSechema,
-    "friend_requests"
-  );
+  mongoose.model("FriendRequest", FriendRequestSechema, "friend_requests");
 
 export default FriendRequest;

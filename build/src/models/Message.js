@@ -41,7 +41,7 @@ const MessageSchema = new mongoose_1.Schema({
         ref: "User",
         default: null,
     },
-    receiverId: {
+    recipientId: {
         type: mongoose_1.default.Schema.Types.ObjectId,
         require: true,
         ref: "User",
@@ -59,10 +59,10 @@ const MessageSchema = new mongoose_1.Schema({
         type: Boolean,
         default: false,
     },
-    isStar: {
-        type: Boolean,
-        default: false,
-    },
+    // isStar: {
+    //   type: Boolean,
+    //   default: false,
+    // },
     visibleToEveryone: {
         type: Boolean,
         default: true,

@@ -34,18 +34,21 @@ var __importStar = (this && this.__importStar) || (function () {
 })();
 Object.defineProperty(exports, "__esModule", { value: true });
 const mongoose_1 = __importStar(require("mongoose"));
-const ContactListSchema = new mongoose_1.Schema({
-    contactId: {
-        type: mongoose_1.default.Schema.Types.ObjectId,
-        ref: "User",
-    },
-    roomId: {
-        type: mongoose_1.default.Schema.Types.ObjectId,
-        ref: "Room",
-    },
-}, {
-    _id: false,
-});
+// const ContactListSchema = new Schema(
+//   {
+//     contactId: {
+//       type: mongoose.Schema.Types.ObjectId,
+//       ref: "User",
+//     },
+//     roomId: {
+//       type: mongoose.Schema.Types.ObjectId,
+//       ref: "Room",
+//     },
+//   },
+//   {
+//     _id: false,
+//   }
+// );
 const UserSchema = new mongoose_1.Schema({
     username: {
         type: String,
@@ -69,50 +72,48 @@ const UserSchema = new mongoose_1.Schema({
         type: String,
         default: null,
     },
-    starMessages: {
+    isOnline: {
+        type: Boolean,
+        default: false,
+    },
+    isChatAllowForStrangers: {
+        type: Boolean,
+        default: false,
+    },
+    chats: {
         type: [mongoose_1.default.Schema.Types.ObjectId],
         default: [],
-        ref: "Message",
+        ref: "Room",
     },
-    following: {
-        type: [mongoose_1.default.Schema.Types.ObjectId],
-        default: [],
-        ref: "User",
-    },
-    followers: {
-        type: [mongoose_1.default.Schema.Types.ObjectId],
-        default: [],
-        ref: "User",
-    },
-    contactList: {
-        type: [ContactListSchema],
-        default: [],
-        ref: "User",
-    },
-    friendList: {
+    friends: {
         type: [mongoose_1.default.Schema.Types.ObjectId],
         default: [],
         ref: "User",
     },
-    friendRequestList: {
+    friendRequests: {
         type: [mongoose_1.default.Schema.Types.ObjectId],
         default: [],
-        ref: "User",
+        ref: "FriendRequest",
     },
+    // starMessages: {
+    //   type: [mongoose.Schema.Types.ObjectId],
+    //   default: [],
+    //   ref: "Message",
+    // },
+    // favouritesContactList: {
+    //   type: [mongoose.Schema.Types.ObjectId],
+    //   default: [],
+    // },
+    // blacklist: {
+    //   type: [mongoose.Schema.Types.ObjectId],
+    //   default: [],
+    //   ref: "user",
+    // },
     // invitations: {
     //   type: [mongoose.Schema.Types.ObjectId],
     //   default: [],
     //   ref: "User",
     // },
-    favouritesContactList: {
-        type: [mongoose_1.default.Schema.Types.ObjectId],
-        default: [],
-    },
-    blacklist: {
-        type: [mongoose_1.default.Schema.Types.ObjectId],
-        default: [],
-        ref: "user",
-    },
     // access_token: String,
     // refresh_token: String,
     // access_token_expiry: String,

@@ -1,0 +1,13 @@
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+const express_1 = require("express");
+const message_1 = require("../controllers/chat/message");
+const router = (0, express_1.Router)();
+router.get("/:mid", message_1.getMessage);
+router.post("/", message_1.storeMessage);
+router.patch("/:mid/pin", message_1.updatePinMessage);
+router.patch("/:mid/edit", message_1.editMessage);
+router.patch("/:mid/deleteforeveryone", message_1.deleteMessageForEveryone);
+router.patch("/:mid/deleteforme", message_1.deleteMessageForMe);
+// router.patch("/:mid/star", updateStarMessage);
+exports.default = router;

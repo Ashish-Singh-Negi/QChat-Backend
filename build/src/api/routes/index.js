@@ -1,0 +1,22 @@
+"use strict";
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+const express_1 = __importDefault(require("express"));
+const verify_1 = require("../../middlewares/verify");
+const auth_1 = __importDefault(require("./auth"));
+const message_1 = __importDefault(require("./message"));
+const friend_1 = __importDefault(require("./friend"));
+const friendRequest_1 = __importDefault(require("./friendRequest"));
+const chat_1 = __importDefault(require("./chat"));
+const user_1 = __importDefault(require("./user"));
+const app = (0, express_1.default)();
+app.use("/auth", auth_1.default);
+app.use("/messages", message_1.default);
+app.use(verify_1.verify);
+app.use("/friends", friend_1.default);
+app.use("/friends/requests", friendRequest_1.default);
+app.use("/chats", chat_1.default);
+app.use("/users", user_1.default);
+exports.default = app;

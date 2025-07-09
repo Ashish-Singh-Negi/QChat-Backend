@@ -1,4 +1,5 @@
 import mongoose, { models, Schema } from "mongoose";
+import { IMessage } from "../interfaces/IMessage";
 
 const MessageSchema = new Schema(
   {
@@ -8,7 +9,7 @@ const MessageSchema = new Schema(
       ref: "User",
       default: null,
     },
-    receiverId: {
+    recipientId: {
       type: mongoose.Schema.Types.ObjectId,
       require: true,
       ref: "User",
@@ -26,10 +27,10 @@ const MessageSchema = new Schema(
       type: Boolean,
       default: false,
     },
-    isStar: {
-      type: Boolean,
-      default: false,
-    },
+    // isStar: {
+    //   type: Boolean,
+    //   default: false,
+    // },
     visibleToEveryone: {
       type: Boolean,
       default: true,

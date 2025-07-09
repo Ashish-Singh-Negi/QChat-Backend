@@ -1,0 +1,10 @@
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+const express_1 = require("express");
+const request_1 = require("../controllers/friend/request");
+const router = (0, express_1.Router)();
+router.get("/:rid", request_1.getFriendRequest);
+router.post("/", request_1.sendFriendRequest);
+router.patch("/:rid/accept", request_1.acceptFriendRequest);
+router.patch("/:rid/reject", request_1.rejectFriendRequest);
+exports.default = router;

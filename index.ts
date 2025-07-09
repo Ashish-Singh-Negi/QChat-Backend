@@ -1,12 +1,20 @@
-import express, { NextFunction, Request, Response } from "express";
+import express from "express";
 import connectToDB from "./src/utils/dbconnection";
 import http from "http";
 import dotenv from "dotenv";
-import webSocket from "ws";
-import axios from "axios";
 import cors from "cors";
+import routes from "./src/api/routes";
+import config from "./src/config";
 import cookieParser from "cookie-parser";
 import { WebSocket } from "ws";
+import { WebSocketServer } from "ws";
+import { errorHandler } from "./src/middlewares/errorhandler";
+import MessageService from "./src/services/message";
+import MessageRepository from "./src/repositories/MessageRepository";
+import ChatRepository from "./src/repositories/ChatRepository";
+import Chat from "./src/models/Chat";
+import Message from "./src/models/Message";
+import { ObjectId } from "mongodb";
 
 const app: express.Application = express();
 
@@ -37,89 +45,25 @@ app.use(cookieParser());
 
 app.use(express.json());
 
-// Import all Routes
-import { verify } from "./src/middleware/verify";
-import authRouter from "./src/routes/auth";
-import friendsRouter from "./src/routes/friend";
-import messagesRouter from "./src/routes/message";
-import chatRoomInfoRouter from "./src/routes/chat";
-import userRouter from "./src/routes/user";
+app.use(config.api.prefix, routes);
 
-app.use("/auth", authRouter);
-app.use("/users", messagesRouter);
+app.use(errorHandler);
 
-app.use(verify);
+// app.post("/user/friends/notifications", (req: Request, res: Response) => {
+//   try {
+//     const { notification } = req.body;
 
-app.use("/users", friendsRouter);
-app.use("/users", chatRoomInfoRouter);
-app.use("/users", userRouter);
+//     console.log("NOTIFICATION : ", notification);
 
-app.post("/user/friends/notifications", (req: Request, res: Response) => {
-  try {
-    const { notification } = req.body;
-
-    console.log("NOTIFICATION : ", notification);
-
-    return httpStatus.success(res, { notification }, "Notification");
-  } catch (error) {
-    console.error(error);
-    return httpStatus.internalServerError(
-      res,
-      "Notifications Internal Sever Error"
-    );
-  }
-});
-
-app.get("/users", async (req: Request, res: Response) => {
-  try {
-    const { username } = req.query;
-
-    if (!username) return httpStatus.badRequest(res, "username is required");
-
-    const users = await User.find()
-      .select(
-        "-password -blacklist -friendRequestList -email -favouritesContactList -starMessages"
-      )
-      .lean();
-
-    console.log("Users : ", users);
-
-    const usernames = users.filter((user) => {
-      if (user.username.toLowerCase().startsWith(username)) {
-        return user.username;
-      }
-    });
-
-    if (!usernames.length)
-      return httpStatus.notFound(res, "username not found");
-
-    return httpStatus.success(res, usernames, "Founded");
-  } catch (error) {
-    console.error(error);
-    return httpStatus.internalServerError(res, "Search Internal Sever Error");
-  }
-});
-
-app.get("/users/friends/:fid", async (req: Request, res: Response) => {
-  try {
-    const { fid } = req.params;
-
-    const friendProfile = await User.findById(fid).select("-password").exec();
-
-    if (!friendProfile)
-      return httpStatus.redirect(res, "/login", "Unauthorized");
-
-    return httpStatus.success(res, friendProfile, "F Profile Found");
-  } catch (error) {
-    console.error(error);
-    return httpStatus.internalServerError(res, "Internal Server Error :(");
-  }
-});
-
-import { WebSocketServer } from "ws";
-import User from "./src/models/User";
-import httpStatus from "./src/utils/response-codes";
-import { ObjectId } from "mongodb";
+//     return httpStatus.success(res, { notification }, "Notification");
+//   } catch (error) {
+//     console.error(error);
+//     return httpStatus.internalServerError(
+//       res,
+//       "Notifications Internal Sever Error"
+//     );
+//   }
+// });
 
 interface MessageData {
   action: "JOIN" | "MESSAGE" | "LEAVE" | "UPDATE";
@@ -139,30 +83,13 @@ const wss = new WebSocketServer({ server, path: "/chat" });
 // Object to store rooms and their clients
 const rooms: { [key: string]: Set<CustomWebSocket> } = {};
 
-const storeMessage = async (messageData: {
-  _id: ObjectId;
-  content: string;
-  sender: string;
-  receiver: string;
-  room: string;
-}) => {
-  try {
-    const { data } = await axios.post(
-      `${process.env.BACKEND_URL}/users/chats/messages`,
-      messageData,
-      {
-        withCredentials: true,
-      }
-    );
-
-    console.log("RESPONSE : ", data);
-  } catch (error) {
-    console.error("ERROR : ", error);
-  }
-};
-
 wss.on("connection", (ws: CustomWebSocket) => {
   console.log("New Ws connected");
+
+  const messageServiceInstance = new MessageService(
+    new MessageRepository(Message),
+    new ChatRepository(Chat)
+  );
 
   ws.on("message", (message: WebSocket) => {
     try {
@@ -226,21 +153,21 @@ wss.on("connection", (ws: CustomWebSocket) => {
           if (data.room && data.content) {
             const room = rooms[data.room];
             if (room) {
-              const messageId = new ObjectId();
+              const mid = new ObjectId();
 
-              storeMessage({
-                _id: messageId,
-                sender: data.sender!,
-                receiver: data.receiver!,
-                room: data.room,
-                content: data.content,
-              });
+              messageServiceInstance.storeMessage(
+                mid,
+                data.sender!,
+                data.receiver!,
+                data.content!,
+                data.room!
+              );
 
               room.forEach((client) => {
                 if (client.readyState === WebSocket.OPEN) {
                   client.send(
                     JSON.stringify({
-                      _id: messageId,
+                      _id: mid,
                       sender: data.sender,
                       receiver: data.receiver,
                       content: data.content,
