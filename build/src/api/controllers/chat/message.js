@@ -64,7 +64,8 @@ const editMessage = (0, express_async_handler_1.default)((req, res) => __awaiter
 }));
 exports.editMessage = editMessage;
 const updatePinMessage = (0, express_async_handler_1.default)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    const { crid, mid } = req.params;
+    const { mid } = req.params;
+    const { crid } = req.body;
     if (!mid || !crid) {
         return response_codes_1.default.badRequest(res, "Update Message : Bad Request");
     }

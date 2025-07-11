@@ -66,7 +66,7 @@ class FriendRequestService {
                 throw error;
             }
             finally {
-                session.endSession();
+                yield session.endSession();
             }
         });
     }
@@ -103,7 +103,7 @@ class FriendRequestService {
                 throw error;
             }
             finally {
-                session.endSession();
+                yield session.endSession();
             }
         });
     }
@@ -142,11 +142,11 @@ class FriendRequestService {
                 yield session.commitTransaction();
             }
             catch (error) {
-                session.abortTransaction();
+                yield session.abortTransaction();
                 throw error;
             }
             finally {
-                session.endSession();
+                yield session.endSession();
             }
         });
     }

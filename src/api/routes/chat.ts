@@ -1,7 +1,7 @@
 import { Router } from "express";
 import {
+  clearChat,
   createChat,
-  deleteChat,
   disappearChatMessages,
   getChatDetails,
   updateChatSettings,
@@ -22,6 +22,6 @@ router.delete("/:crid/messages/disappear", disappearChatMessages);
 router.get("/:crid", getChatDetails);
 router.post("/", createChat);
 router.patch("/:crid", updateChatSettings);
-router.delete("/:crid", deleteChat);
+router.delete("/:crid/clear", clearChat);
 
 export default router;

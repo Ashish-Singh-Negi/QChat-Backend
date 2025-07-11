@@ -76,7 +76,7 @@ export default class ChatService {
       console.log(error);
       throw error;
     } finally {
-      session.endSession();
+      await session.endSession();
     }
   }
 
@@ -118,7 +118,7 @@ export default class ChatService {
       console.log(error);
       throw error;
     } finally {
-      session.endSession();
+      await session.endSession();
     }
   }
 
@@ -187,11 +187,11 @@ export default class ChatService {
       console.error(error);
       throw error;
     } finally {
-      session.endSession();
+      await session.endSession();
     }
   }
 
-  async deleteChat(crid: string) {
+  async clearChat(crid: string) {
     const session = await mongoose.startSession();
     session.startTransaction();
 
@@ -204,12 +204,12 @@ export default class ChatService {
 
       await this.chatRepo.save(chatRecord, session);
 
-      session.commitTransaction();
+      await session.commitTransaction();
     } catch (error) {
-      session.abortTransaction();
+      await session.abortTransaction();
       throw error;
     } finally {
-      session.endSession();
+      await session.endSession();
     }
   }
 }

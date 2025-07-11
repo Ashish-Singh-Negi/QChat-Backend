@@ -2,7 +2,6 @@ import mongoose from "mongoose";
 import NotFoundError from "../errors/NotFoundError";
 import MessageRepository from "../repositories/MessageRepository";
 import ChatRepository from "../repositories/ChatRepository";
-import { ObjectId } from "mongodb";
 
 export default class MessageService {
   constructor(
@@ -68,7 +67,7 @@ export default class MessageService {
       console.error(error);
       throw error;
     } finally {
-      session.endSession();
+      await session.endSession();
     }
   }
 
@@ -138,17 +137,19 @@ export default class MessageService {
       await this.messageRepo.save(messageRecord, session);
       await this.chatRepo.save(chatRecord, session);
 
-      session.commitTransaction();
+      console.log(messageRecord);
+      console.log(chatRecord);
 
+      await session.commitTransaction();
       return {
         message: messageRecord,
       };
     } catch (error) {
-      session.abortTransaction();
+      await session.abortTransaction();
       console.error(error);
       throw error;
     } finally {
-      session.endSession();
+      await session.endSession();
     }
   }
 

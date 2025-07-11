@@ -122,7 +122,7 @@ const disappearChatMessages = expressAsyncHandler(
   }
 );
 
-const deleteChat = expressAsyncHandler(async (req: Request, res: Response) => {
+const clearChat = expressAsyncHandler(async (req: Request, res: Response) => {
   const { crid } = req.params;
   if (!crid) {
     return httpStatus.badRequest(res, "Chat room ID is required.");
@@ -134,7 +134,7 @@ const deleteChat = expressAsyncHandler(async (req: Request, res: Response) => {
     new MessageRepository(Message)
   );
 
-  await chatServiceInstance.deleteChat(crid);
+  await chatServiceInstance.clearChat(crid);
 
   return httpStatus.noContent(res);
 });
@@ -144,5 +144,5 @@ export {
   createChat,
   updateChatSettings,
   disappearChatMessages,
-  deleteChat,
+  clearChat,
 };

@@ -66,7 +66,7 @@ class MessageService {
                 throw error;
             }
             finally {
-                session.endSession();
+                yield session.endSession();
             }
         });
     }
@@ -116,18 +116,20 @@ class MessageService {
                 }
                 yield this.messageRepo.save(messageRecord, session);
                 yield this.chatRepo.save(chatRecord, session);
-                session.commitTransaction();
+                console.log(messageRecord);
+                console.log(chatRecord);
+                yield session.commitTransaction();
                 return {
                     message: messageRecord,
                 };
             }
             catch (error) {
-                session.abortTransaction();
+                yield session.abortTransaction();
                 console.error(error);
                 throw error;
             }
             finally {
-                session.endSession();
+                yield session.endSession();
             }
         });
     }

@@ -71,7 +71,7 @@ class ChatService {
                 throw error;
             }
             finally {
-                session.endSession();
+                yield session.endSession();
             }
         });
     }
@@ -102,7 +102,7 @@ class ChatService {
                 throw error;
             }
             finally {
-                session.endSession();
+                yield session.endSession();
             }
         });
     }
@@ -151,11 +151,11 @@ class ChatService {
                 throw error;
             }
             finally {
-                session.endSession();
+                yield session.endSession();
             }
         });
     }
-    deleteChat(crid) {
+    clearChat(crid) {
         return __awaiter(this, void 0, void 0, function* () {
             const session = yield mongoose_1.default.startSession();
             session.startTransaction();
@@ -166,14 +166,14 @@ class ChatService {
                 const messages = chatRecord.messages;
                 yield this.messageRepo.deleteManyById(messages, session);
                 yield this.chatRepo.save(chatRecord, session);
-                session.commitTransaction();
+                yield session.commitTransaction();
             }
             catch (error) {
-                session.abortTransaction();
+                yield session.abortTransaction();
                 throw error;
             }
             finally {
-                session.endSession();
+                yield session.endSession();
             }
         });
     }

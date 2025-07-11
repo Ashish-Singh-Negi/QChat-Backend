@@ -10,5 +10,5 @@ router.delete("/:crid/messages/disappear", chat_1.disappearChatMessages);
 router.get("/:crid", chat_1.getChatDetails);
 router.post("/", chat_1.createChat);
 router.patch("/:crid", chat_1.updateChatSettings);
-router.delete("/:crid", chat_1.deleteChat);
+router.delete("/:crid/clear", chat_1.clearChat);
 exports.default = router;

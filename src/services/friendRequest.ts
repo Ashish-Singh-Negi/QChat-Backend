@@ -1,6 +1,3 @@
-import FriendRequest from "../models/FriendRequest";
-import User from "../models/User";
-
 import { IUser } from "../interfaces/IUser";
 
 import NotFoundError from "../errors/NotFoundError";
@@ -87,7 +84,7 @@ export default class FriendRequestService {
       console.error(error);
       throw error;
     } finally {
-      session.endSession();
+      await session.endSession();
     }
   }
 
@@ -143,7 +140,7 @@ export default class FriendRequestService {
       console.error(error);
       throw error;
     } finally {
-      session.endSession();
+      await session.endSession();
     }
   }
 
@@ -206,10 +203,10 @@ export default class FriendRequestService {
 
       await session.commitTransaction();
     } catch (error) {
-      session.abortTransaction();
+      await session.abortTransaction();
       throw error;
     } finally {
-      session.endSession();
+      await session.endSession();
     }
   }
 }

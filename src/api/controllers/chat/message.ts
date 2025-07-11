@@ -95,7 +95,8 @@ const editMessage = expressAsyncHandler(async (req: Request, res: Response) => {
 
 const updatePinMessage = expressAsyncHandler(
   async (req: Request, res: Response) => {
-    const { crid, mid } = req.params;
+    const { mid } = req.params;
+    const { crid } = req.body;
 
     if (!mid || !crid) {
       return httpStatus.badRequest(res, "Update Message : Bad Request");

@@ -1,5 +1,4 @@
 import bcrypt from "bcrypt";
-import User from "../models/User";
 import jwt from "jsonwebtoken";
 import { IUser, IUserInputDTO } from "../interfaces/IUser";
 import config from "../config";

@@ -12,7 +12,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.deleteChat = exports.disappearChatMessages = exports.updateChatSettings = exports.createChat = exports.getChatDetails = void 0;
+exports.clearChat = exports.disappearChatMessages = exports.updateChatSettings = exports.createChat = exports.getChatDetails = void 0;
 const mongoose_1 = __importDefault(require("mongoose"));
 const express_async_handler_1 = __importDefault(require("express-async-handler"));
 const BadRequestError_1 = __importDefault(require("../../../errors/BadRequestError"));
@@ -81,13 +81,13 @@ const disappearChatMessages = (0, express_async_handler_1.default)((req, res) =>
     });
 }));
 exports.disappearChatMessages = disappearChatMessages;
-const deleteChat = (0, express_async_handler_1.default)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
+const clearChat = (0, express_async_handler_1.default)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const { crid } = req.params;
     if (!crid) {
         return response_codes_1.default.badRequest(res, "Chat room ID is required.");
     }
     const chatServiceInstance = new chat_1.default(new ChatRepository_1.default(Chat_1.default), new UserRepository_1.default(User_1.default), new MessageRepository_1.default(Message_1.default));
-    yield chatServiceInstance.deleteChat(crid);
+    yield chatServiceInstance.clearChat(crid);
     return response_codes_1.default.noContent(res);
 }));
-exports.deleteChat = deleteChat;
+exports.clearChat = clearChat;
