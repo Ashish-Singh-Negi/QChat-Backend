@@ -21,8 +21,6 @@ const app: express.Application = express();
 // Create an HTTP Server
 const server = http.createServer(app);
 
-dotenv.config();
-
 // connect to DB
 (async () => {
   try {
