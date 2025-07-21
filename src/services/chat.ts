@@ -6,6 +6,7 @@ import ConflictError from "../errors/ConflictError";
 import UserRepository from "../repositories/UserRepository";
 import MessageRepository from "../repositories/MessageRepository";
 import ChatRepository from "../repositories/ChatRepository";
+import BadRequestError from "../errors/BadRequestError";
 
 const disappearingMessagesDurations = {
   "24 hours": "24h",
@@ -92,6 +93,12 @@ export default class ChatService {
       const chatRecord = await this.chatRepo.findChatById(crid, "", session);
       if (!chatRecord) throw new NotFoundError({ message: "Chat Not Found" });
 
+      const isParticipant = chatRecord.participants.includes(userId);
+      if (!isParticipant)
+        throw new BadRequestError({
+          message: "Oops! unauthorized to update chat settings",
+        });
+
       const messageContent =
         duration === "OFF"
           ? `${userId}: turned off disappearing messages.`
@@ -132,8 +139,7 @@ export default class ChatService {
         "messages disappearingMessages",
         session
       );
-
-      console.log(chatRecord);
+      if (!chatRecord) throw new NotFoundError({ message: "Chat Not Found" });
 
       const messages = chatRecord.messages;
 
@@ -201,6 +207,7 @@ export default class ChatService {
 
       const messages: string[] = chatRecord.messages;
       await this.messageRepo.deleteManyById(messages, session);
+      chatRecord.messages = [];
 
       await this.chatRepo.save(chatRecord, session);
 

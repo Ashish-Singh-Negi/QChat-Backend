@@ -9,6 +9,7 @@ const httpStatus = {
   // Success responses
   success: (res: Response, data: any, message: string) => {
     res.status(200).json({
+      success: true,
       data,
       message,
     });
@@ -16,6 +17,7 @@ const httpStatus = {
 
   created: (res: Response, data: any, message: string) => {
     res.status(201).json({
+      success: true,
       data,
       message,
     });

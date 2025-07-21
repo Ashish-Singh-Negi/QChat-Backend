@@ -1,3 +1,4 @@
+import BadRequestError from "../errors/BadRequestError";
 import UserRepository from "../repositories/UserRepository";
 
 export default class UserService {
@@ -19,13 +20,23 @@ export default class UserService {
       about: string;
     }
   ) {
-    const userRecord = await this.userRepo.findUserById(userId);
+    try {
+      let updatedUserProfile;
 
-    if (dto.about) userRecord.about = dto.about;
-    if (dto.profilePic) userRecord.profilePic = dto.profilePic;
+      if (dto.about)
+        updatedUserProfile = await this.userRepo.findByIdAndUpdate(userId, {
+          about: dto.about,
+        });
 
-    const updatedUserProfile = await userRecord.save();
-    return { updatedUserProfile };
+      if (dto.profilePic)
+        updatedUserProfile = await this.userRepo.findByIdAndUpdate(userId, {
+          about: dto.profilePic,
+        });
+
+      return { updatedUserProfile };
+    } catch (error) {
+      throw error;
+    }
   }
 
   public async searchWithUsername(username: string) {

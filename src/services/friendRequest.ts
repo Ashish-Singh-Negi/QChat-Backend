@@ -1,10 +1,10 @@
-import { IUser } from "../interfaces/IUser";
-
 import NotFoundError from "../errors/NotFoundError";
 import ConflictError from "../errors/ConflictError";
 import FriendRequestRepository from "../repositories/FriendRequestRepository";
 import UserRepository from "../repositories/UserRepository";
 import mongoose, { ClientSession, ObjectId } from "mongoose";
+import { IUser } from "../utils/interfaces/IUser";
+import BadRequestError from "../errors/BadRequestError";
 
 export default class FriendRequestService {
   constructor(
@@ -12,8 +12,10 @@ export default class FriendRequestService {
     private userRepo: UserRepository
   ) {}
 
-  public getFriendRequest(rid: string) {
-    return this.friendRequestRepo.findRequestById(rid);
+  public async getFriendRequest(rid: string) {
+    const friendRequest = await this.friendRequestRepo.findRequestById(rid);
+    if (!friendRequest)
+      throw new NotFoundError({ message: "Friend request Not Found" });
   }
 
   public async sendFriendRequest(username: string, friendUsername: string) {
@@ -21,6 +23,16 @@ export default class FriendRequestService {
     session.startTransaction();
 
     try {
+      const recipientRecord = await this.userRepo.findByUsername(
+        friendUsername,
+        "friends friendRequests username profilePic",
+        session
+      );
+      if (!recipientRecord)
+        throw new NotFoundError({
+          message: `User with ${friendUsername} Not Found`,
+        });
+
       const senderRecord = await this.userRepo.findByUsername(
         username,
         "friends friendRequests username profilePic",
@@ -28,14 +40,6 @@ export default class FriendRequestService {
       );
       if (!senderRecord)
         throw new NotFoundError({ message: "Sender not found" });
-
-      const recipientRecord = await this.userRepo.findByUsername(
-        friendUsername,
-        "friends friendRequests username profilePic",
-        session
-      );
-      if (!recipientRecord)
-        throw new NotFoundError({ message: "Invalid username" });
 
       const isAlreadyfriend = senderRecord.friends.some(
         (fid: string) => fid.toString() === recipientRecord._id.toString()

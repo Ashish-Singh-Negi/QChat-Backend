@@ -1,9 +1,8 @@
 import express from "express";
 import connectToDB from "./src/utils/dbconnection";
 import http from "http";
-import dotenv from "dotenv";
 import cors from "cors";
-import routes from "./src/api/routes";
+import apiRoutes from "./src/routes";
 import config from "./src/config";
 import cookieParser from "cookie-parser";
 import { WebSocket } from "ws";
@@ -40,28 +39,11 @@ app.use(
 );
 
 app.use(cookieParser());
-
 app.use(express.json());
 
-app.use(config.api.prefix, routes);
+app.use(config.api.prefix, apiRoutes);
 
 app.use(errorHandler);
-
-// app.post("/user/friends/notifications", (req: Request, res: Response) => {
-//   try {
-//     const { notification } = req.body;
-
-//     console.log("NOTIFICATION : ", notification);
-
-//     return httpStatus.success(res, { notification }, "Notification");
-//   } catch (error) {
-//     console.error(error);
-//     return httpStatus.internalServerError(
-//       res,
-//       "Notifications Internal Sever Error"
-//     );
-//   }
-// });
 
 interface MessageData {
   action: "JOIN" | "MESSAGE" | "LEAVE" | "UPDATE";

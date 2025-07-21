@@ -1,11 +1,15 @@
+import BadRequestError from "../errors/BadRequestError";
 import NotFoundError from "../errors/NotFoundError";
 import FriendRepository from "../repositories/FirendRepository";
 
 export default class FriendService {
   constructor(private friendRepo: FriendRepository) {}
 
-  async getFriendProfile(id: string) {
-    const friendRecord = await this.friendRepo.findfriendById(id, "-updatedAt");
+  async getFriendProfile(id: string, filter = "") {
+    const friendRecord = await this.friendRepo.findfriendById(
+      id,
+      ` -chats -friendRequests ${filter}`
+    );
     if (!friendRecord)
       throw new NotFoundError({
         message: "Friend Profile Not Found",
@@ -15,6 +19,7 @@ export default class FriendService {
   }
 
   async removeFriend(userId: string, friendId: string) {
-    console.log(userId, " ", friendId);
+    // ! TODO
+    console.log("TODO : implement Remove friend method");
   }
 }

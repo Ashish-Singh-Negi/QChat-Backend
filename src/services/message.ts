@@ -10,17 +10,11 @@ export default class MessageService {
   ) {}
 
   async getAllChatMessage(crid: string) {
-    const messages = await this.chatRepo.findChatById(crid, "messages");
-    if (!messages)
+    const chatRecord = await this.chatRepo.findChatById(crid, "messages");
+    if (!chatRecord)
       throw new NotFoundError({ message: "Chat Messages Not Found" });
 
-    // const messages = await this.messageRepo.findAllChatMessages(
-    //   chatRecord.messages
-    // );
-    // if (!messages)
-    //   throw new NotFoundError({ message: "chat messages Not Found" });
-
-    return { messages: messages };
+    return { messages: chatRecord.messages };
   }
 
   async getMessage(mid: string) {
@@ -61,7 +55,7 @@ export default class MessageService {
 
       await session.commitTransaction();
 
-      return { createdMessage: newMessageRecord };
+      return { storedMessage: newMessageRecord };
     } catch (error) {
       await session.abortTransaction();
       console.error(error);
@@ -161,6 +155,8 @@ export default class MessageService {
     messageRecord.visibleToEveryone = false;
 
     await this.messageRepo.save(messageRecord);
+
+    return messageRecord;
   }
 
   async deleteMessageForMe(mid: string) {
@@ -171,5 +167,7 @@ export default class MessageService {
     messageRecord.visibleToSender = false;
 
     await this.messageRepo.save(messageRecord);
+
+    return messageRecord
   }
 }

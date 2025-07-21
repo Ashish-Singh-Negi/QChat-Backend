@@ -12,6 +12,8 @@ export default class BaseRepository<T> {
   }
 
   findOne(query: any, lean: boolean) {
+    console.log(query);
+
     return lean
       ? this.model
           .findOne({
@@ -23,11 +25,24 @@ export default class BaseRepository<T> {
         });
   }
 
+  findByIdAndUpdate(id: string, data: {}) {
+    return this.model.findByIdAndUpdate(
+      id,
+      {
+        $set: {
+          ...data,
+        },
+      },
+      {
+        new: true,
+        lean: true,
+      }
+    );
+  }
+
   deleteById(id: string, session: ClientSession) {
     return this.model.findByIdAndDelete(id).session(session);
   }
-
-
 
   save(document: HydratedDocument<T>, session?: ClientSession) {
     return document.save({ session });

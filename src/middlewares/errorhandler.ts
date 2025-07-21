@@ -12,49 +12,43 @@ export const errorHandler = (
   // handled errors
 
   if (err instanceof BadRequestError) {
-    const { statusCode, errors, logging } = err;
-    if (logging) {
-      console.error({
-        code: err.statusCode,
-        error: err.errors,
-        stack: err.stack,
-        endpoint: req.originalUrl,
-        method: req.method,
-        timestamp: new Date().toLocaleDateString(),
-      });
-    }
+    const { statusCode, errors } = err;
 
-    res.status(statusCode).json({ errors });
+    console.error(" BadRequestError : ", {
+      code: err.statusCode,
+      error: err.errors,
+      endpoint: req.originalUrl,
+      method: req.method,
+      timestamp: new Date().toLocaleString(),
+    });
+
+    res.status(statusCode).json({ success: false, ...errors });
   }
 
   if (err instanceof NotFoundError) {
-    const { statusCode, errors, logging } = err;
-    if (logging) {
-      console.error({
-        code: err.statusCode,
-        error: err.errors,
-        stack: err.stack,
-        endpoint: req.originalUrl,
-        method: req.method,
-        timestamp: new Date().toLocaleDateString(),
-      });
-    }
+    const { statusCode, errors } = err;
+    console.error({
+      code: err.statusCode,
+      error: err.errors,
+      stack: err.stack,
+      endpoint: req.originalUrl,
+      method: req.method,
+      timestamp: new Date().toLocaleString(),
+    });
 
     res.status(statusCode).json({ errors });
   }
 
   if (err instanceof ConflictError) {
-    const { statusCode, errors, logging } = err;
-    if (logging) {
-      console.error({
-        code: err.statusCode,
-        error: err.errors,
-        stack: err.stack,
-        endpoint: req.originalUrl,
-        method: req.method,
-        timestamp: new Date().toLocaleDateString(),
-      });
-    }
+    const { statusCode, errors } = err;
+    console.error({
+      code: err.statusCode,
+      error: err.errors,
+      stack: err.stack,
+      endpoint: req.originalUrl,
+      method: req.method,
+      timestamp: new Date().toLocaleString(),
+    });
 
     res.status(statusCode).json({ errors });
   }

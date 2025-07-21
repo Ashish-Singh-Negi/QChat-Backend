@@ -1,10 +1,10 @@
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
-import { IUser, IUserInputDTO } from "../interfaces/IUser";
 import config from "../config";
 import BadRequestError from "../errors/BadRequestError";
 import ConflictError from "../errors/ConflictError";
 import UserRepository from "../repositories/UserRepository";
+import { IUser, IUserInputDTO } from "../utils/interfaces/IUser";
 
 const ACCESS_TOKEN_EXP = 1000 * 60 * 15;
 const REFRESH_TOKEN_EXP = 1000 * 60 * 60 * 24 * 7;
@@ -21,6 +21,7 @@ export default class AuthService {
         },
         true
       );
+      console.log(isUserAlreadyRegistered);
       if (isUserAlreadyRegistered)
         throw new ConflictError({ message: "User already Register" });
 
@@ -51,7 +52,10 @@ export default class AuthService {
       );
       if (!userRecord)
         throw new BadRequestError({
-          message: "User not registered",
+          message: "Invalid credentials",
+          context: {
+            explanation: "username or password is invalid",
+          },
         });
 
       const isPasswordMatch = await bcrypt.compare(
@@ -59,10 +63,14 @@ export default class AuthService {
         userRecord.password
       );
       if (!isPasswordMatch)
-        throw new BadRequestError({ message: "Invalid credentials" });
+        throw new BadRequestError({
+          message: "Invalid credentials",
+          context: {
+            explanation: "username or password is invalid",
+          },
+        });
 
       Reflect.deleteProperty(userRecord, "password");
-
       const access_token = this.generateAccessToken(userRecord);
       const refresh_token = this.generateRefreshToken(userRecord);
 

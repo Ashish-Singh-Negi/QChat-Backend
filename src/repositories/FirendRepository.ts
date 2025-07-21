@@ -7,14 +7,13 @@ export default class FriendRepository extends BaseRepository<typeof User> {
     super(userModel);
   }
 
-  findfriendById(
-    id: string,
-    filter = "-password -__v",
-    session?: ClientSession
-  ) {
+  findfriendById(id: string, filter?: string, session?: ClientSession) {
     return session
-      ? this.userModel.findById(id).select(`${filter}`).session(session)
-      : this.userModel.findById(id).select(`${filter}`).lean();
+      ? this.userModel
+          .findById(id)
+          .select(`-password -__v ${filter}`)
+          .session(session)
+      : this.userModel.findById(id).select(`-password -__v ${filter}`).lean();
   }
 
   findByUsername(

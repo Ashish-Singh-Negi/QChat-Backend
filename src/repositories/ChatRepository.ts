@@ -1,7 +1,7 @@
 import { ClientSession } from "mongoose";
 import BaseRepository from "./BaseRepository";
-import { IChat } from "../interfaces/IChat";
 import Chat from "../models/Chat";
+import { IChat } from "../utils/interfaces/IChat";
 
 export default class ChatRepository extends BaseRepository<typeof Chat> {
   constructor(private chatModel: typeof Chat) {
