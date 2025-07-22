@@ -14,6 +14,10 @@ import Message from "../models/Message";
 import Chat from "../models/Chat";
 import { validateObjectId } from "../utils/validators/mongoId.validator";
 
+/**
+ * GET /api/v1/messages/:mid
+ * req-body {}
+ */
 const getMessage = expressAsyncHandler(async (req: Request, res: Response) => {
   const { mid } = req.params;
   validateObjectId(mid, "message Id");
@@ -27,6 +31,16 @@ const getMessage = expressAsyncHandler(async (req: Request, res: Response) => {
   return httpStatus.success(res, message, "message retrived successfully");
 });
 
+/**
+ * POST /api/v1/messages
+ * req-body {
+ *  mid: 6844622f99cafca93832c7c0,
+ *  content: "message content",
+ *  senderId: 6844622f99cafca93832c77d,
+ *  recipientId: 6844622f99cafca93832vs62,
+ *  chatId: 6844622f99cafca93832c7f1
+ * }
+ */
 const storeMessage = expressAsyncHandler(
   async (req: Request, res: Response) => {
     const { mid, content, senderId, recipientId, chatId } = req.body;
@@ -51,6 +65,12 @@ const storeMessage = expressAsyncHandler(
   }
 );
 
+/**
+ * PATCH /api/v1/messages/:mid/edit
+ * req-body {
+ *  content: "new edited content"
+ * }
+ */
 const editMessage = expressAsyncHandler(async (req: Request, res: Response) => {
   const { mid } = req.params;
   validateObjectId(mid, "message Id");
@@ -69,6 +89,12 @@ const editMessage = expressAsyncHandler(async (req: Request, res: Response) => {
   return httpStatus.success(res, editedMessage, "Message Updated");
 });
 
+/**
+ * PATCH /api/v1/messages/:mid/pin
+ * req-body {
+ *  crid : 6844622f99cafca93832c7c9
+ * }
+ */
 const updatePinMessage = expressAsyncHandler(
   async (req: Request, res: Response) => {
     const { mid } = req.params;
@@ -95,6 +121,10 @@ const updatePinMessage = expressAsyncHandler(
   }
 );
 
+/**
+ * PATCH /api/v1/messages/:mid/deleteforeveryone
+ * req-body {}
+ */
 const deleteMessageForEveryone = expressAsyncHandler(
   async (req: Request, res: Response) => {
     const { mid } = req.params;
@@ -110,6 +140,10 @@ const deleteMessageForEveryone = expressAsyncHandler(
   }
 );
 
+/**
+ * PATCH deleteforeveryone/:mid/deleteforme
+ * req-body {}
+ */
 const deleteMessageForMe = expressAsyncHandler(
   async (req: Request, res: Response) => {
     const { mid } = req.params;
