@@ -4,7 +4,6 @@ import { signinController } from "../../controllers/auth/signin";
 import { signupController } from "../../controllers/auth/signup";
 import { refreshController } from "../../controllers/auth/refresh";
 
-import { verifyUser } from "../../middlewares";
 import { validateRequestBody } from "../../utils/validators";
 import { signupSchema } from "../../utils/validators/signup.validator";
 import { signinSchema } from "../../utils/validators/signin.validator";

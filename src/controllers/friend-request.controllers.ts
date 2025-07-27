@@ -22,9 +22,9 @@ const getFriendRequest = expressAsyncHandler(
       new FriendRequestRepository(FriendRequest),
       new UserRepository(User)
     );
-    const request = await friendRequestInstance.getFriendRequest(rid);
+    const friendRequest = await friendRequestInstance.getFriendRequest(rid);
 
-    return httpStatus.success(res, request, "successed");
+    return httpStatus.success(res, friendRequest, "successed");
   }
 );
 

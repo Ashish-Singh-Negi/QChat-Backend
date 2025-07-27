@@ -42,7 +42,7 @@ export default class UserRepository extends BaseRepository<typeof User> {
     });
   }
 
-  getAllUser(query: "username" | "_id", limit = 10) {
+  getAllUser(query = "username profilePic", limit = 10) {
     return this.userModel.find().select(`${query}`).limit(limit).lean();
   }
 
@@ -81,5 +81,13 @@ export default class UserRepository extends BaseRepository<typeof User> {
         }
       )
       .session(session);
+  }
+
+  updateOne(filter: any, data: any) {
+    return this.userModel.updateOne(filter, {
+      $set: {
+        ...data,
+      },
+    });
   }
 }

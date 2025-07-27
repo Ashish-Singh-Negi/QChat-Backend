@@ -4,7 +4,6 @@ import UserService from "../../services/user";
 import UserRepository from "../../repositories/UserRepository";
 import User from "../../models/User";
 import httpStatus from "../../utils/response-codes";
-import BadRequestError from "../../errors/BadRequestError";
 
 /**
  * GET : "/users/profile"
@@ -31,11 +30,6 @@ const updateProfile = expressAsyncHandler(
     const { uid } = req;
     const { about, profilePic } = req.body;
 
-    if (!about && !profilePic)
-      throw new BadRequestError({
-        message: "data is required to update profile",
-      });
-
     const dto = {
       about,
       profilePic,
@@ -55,4 +49,31 @@ const updateProfile = expressAsyncHandler(
   }
 );
 
-export { getProfile, updateProfile };
+/**
+ * PATCH : /users/profile/chat/name  // TODO make endpoint more relatable
+ * req-body {
+ *    nickName: "Apple"
+ *    chatId: 6880f10d020b8ea3f82f4a66
+ * }
+ */
+const updateUserChat = expressAsyncHandler(
+  async (req: Request, res: Response) => {
+    const username = req.name;
+    const { nickName, chatId } = req.body;
+
+    const userServiceinstance = new UserService(new UserRepository(User));
+    const { updatedUserProfile } = await userServiceinstance.updateUserChatName(
+      username!,
+      chatId,
+      nickName
+    );
+
+    return httpStatus.success(
+      res,
+      updatedUserProfile,
+      "Name Changed Successfully"
+    );
+  }
+);
+
+export { getProfile, updateProfile, updateUserChat };

@@ -16,6 +16,39 @@ import mongoose, { models, Schema } from "mongoose";
 //   }
 // );
 
+const FriendsSchema = new Schema(
+  {
+    name: {
+      type: String,
+      default: null,
+    },
+    // id -> Friend Id
+    id: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+    },
+  },
+  {
+    _id: false,
+  }
+);
+const ChatsSchema = new Schema(
+  {
+    name: {
+      type: String,
+      default: null,
+    },
+    // id -> chat id
+    id: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Chat",
+    },
+  },
+  {
+    _id: false,
+  }
+);
+
 const UserSchema = new Schema(
   {
     username: {
@@ -49,14 +82,12 @@ const UserSchema = new Schema(
       default: false,
     },
     chats: {
-      type: [mongoose.Schema.Types.ObjectId],
+      type: [ChatsSchema],
       default: [],
-      ref: "Room",
     },
     friends: {
-      type: [mongoose.Schema.Types.ObjectId],
+      type: [FriendsSchema],
       default: [],
-      ref: "User",
     },
     friendRequests: {
       type: [mongoose.Schema.Types.ObjectId],

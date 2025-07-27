@@ -1,4 +1,5 @@
 import BadRequestError from "../errors/BadRequestError";
+import NotFoundError from "../errors/NotFoundError";
 import UserRepository from "../repositories/UserRepository";
 
 export default class UserService {
@@ -11,6 +12,16 @@ export default class UserService {
   public async getUserProfile(userId: string) {
     const userRecord = await this.userRepo.findUserById(userId, "-password");
     return { userProfile: userRecord };
+  }
+
+  public async searchWithUsername(username: string) {
+    const userRecords = await this.userRepo.getAllUser();
+
+    const usernames = userRecords.filter((userRecord) =>
+      userRecord.username.toLowerCase().startsWith(username.toLowerCase())
+    );
+
+    return { usernames };
   }
 
   public async updateUserProfile(
@@ -39,13 +50,25 @@ export default class UserService {
     }
   }
 
-  public async searchWithUsername(username: string) {
-    const userRecords = await this.userRepo.getAllUser("username");
+  public async updateUserChatName(
+    // TODO Refactor this method
+    username: string,
+    chatId: string,
+    nickName: string
+  ) {
+    try {
+      const updatedUserProfile = await this.userRepo.updateOne(
+        { username: username, "chats.id": chatId },
+        {
+          "chats.$.name": nickName,
+        }
+      );
 
-    const usernames = userRecords.filter((userRecord) =>
-      userRecord.username.toLowerCase().startsWith(username.toLowerCase())
-    );
-
-    return { usernames };
+      if (!updatedUserProfile)
+        throw new NotFoundError({ message: "User Chat not found" });
+      return { updatedUserProfile };
+    } catch (error) {
+      throw error;
+    }
   }
 }

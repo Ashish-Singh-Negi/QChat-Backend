@@ -1,5 +1,4 @@
 import { Request, Response } from "express";
-import mongoose from "mongoose";
 
 import httpStatus from "../utils/response-codes";
 import expressAsyncHandler from "express-async-handler";
@@ -14,7 +13,6 @@ import ChatRepository from "../repositories/ChatRepository";
 import UserRepository from "../repositories/UserRepository";
 import MessageRepository from "../repositories/MessageRepository";
 
-import BadRequestError from "../errors/BadRequestError";
 import MessageService from "../services/message";
 import { validateObjectId } from "../utils/validators/mongoId.validator";
 

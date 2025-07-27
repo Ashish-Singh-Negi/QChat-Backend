@@ -8,7 +8,10 @@ export interface IUser {
   isOnline: boolean;
   starMessages: string[];
   chats: string[];
-  friends: string[];
+  friends: {
+    name?: string;
+    id: string;
+  }[];
   friendRequests: string[];
   createdAt: Date;
   updatedAt: Date;

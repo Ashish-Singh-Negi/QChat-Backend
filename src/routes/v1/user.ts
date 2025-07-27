@@ -1,5 +1,9 @@
 import { Router } from "express";
-import { getProfile, updateProfile } from "../../controllers/user/profile";
+import {
+  getProfile,
+  updateProfile,
+  updateUserChat,
+} from "../../controllers/user/profile";
 import { searchUser } from "../../controllers/user/search";
 import { validateRequestBody } from "../../utils/validators";
 import { updateUserProfileSchema } from "../../utils/validators/user.validator";
@@ -20,5 +24,7 @@ router.patch(
   validateRequestBody(updateUserProfileSchema),
   updateProfile
 );
+
+// router.patch("/profile/chat/name", updateUserChat);
 
 export default router;

@@ -16,6 +16,8 @@ export default class FriendRequestService {
     const friendRequest = await this.friendRequestRepo.findRequestById(rid);
     if (!friendRequest)
       throw new NotFoundError({ message: "Friend request Not Found" });
+
+    return friendRequest;
   }
 
   public async sendFriendRequest(username: string, friendUsername: string) {
@@ -149,8 +151,8 @@ export default class FriendRequestService {
   }
 
   async addToFriends(sender: IUser, recipient: IUser, rid: string) {
-    sender.friends.push(recipient._id);
-    recipient.friends.push(sender._id);
+    sender.friends.push({ id: recipient._id, name: recipient.username });
+    recipient.friends.push({ id: sender._id, name: sender.username });
 
     sender.friendRequests = sender.friendRequests.filter(
       (requestId) => requestId.toString() !== rid

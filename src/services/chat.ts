@@ -12,7 +12,7 @@ const disappearingMessagesDurations = {
   "24 hours": "24h",
   "7 days": "7d",
   "1 month": "1m",
-  OFF: "OFF",
+  "OFF": "OFF",
 };
 
 export default class ChatService {
@@ -54,8 +54,8 @@ export default class ChatService {
       console.log(newChat);
 
       const [userRecord, friendRecord] = await Promise.all([
-        await this.userRepo.findUserById(userId, "chats", session),
-        await this.userRepo.findUserById(friendId, "chats", session),
+        await this.userRepo.findUserById(userId, "chats username", session),
+        await this.userRepo.findUserById(friendId, "chats username", session),
       ]);
 
       if (!userRecord)
@@ -63,8 +63,8 @@ export default class ChatService {
       if (!friendRecord)
         throw new NotFoundError({ message: "friend Details Not Found" });
 
-      userRecord.chats.push(newChat._id);
-      friendRecord.chats.push(newChat._id);
+      userRecord.chats.push({ id: newChat._id, name: friendRecord.username });
+      friendRecord.chats.push({ id: newChat._id, name: userRecord.username });
 
       await this.userRepo.save(userRecord, session);
       await this.userRepo.save(friendRecord, session);
