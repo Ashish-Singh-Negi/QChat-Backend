@@ -46,24 +46,29 @@ app.use(config.api.prefix, apiRoutes);
 app.use(errorHandler);
 
 interface MessageData {
-  action: "JOIN" | "MESSAGE" | "LEAVE" | "UPDATE";
+  action:
+    | "JOIN"
+    | "MESSAGE"
+    | "LEAVE"
+    | "UPDATE"
+    | "ONLINE_STATUS_HEARTBEAT"
+    | "OFFLINE_STATUS";
   content: string;
   room?: string;
   sender?: string;
   receiver?: string;
 }
 
-interface CustomWebSocket extends WebSocket {
-  room?: string; // Add a custom property to track the room
-}
-
 // Create a WebSocket server
 const wss = new WebSocketServer({ server, path: "/chat" });
 
 // Object to store rooms and their clients
-const rooms: { [key: string]: Set<CustomWebSocket> } = {};
+// const rooms: { [key: string]: WebSocket } = {};
 
-wss.on("connection", (ws: CustomWebSocket) => {
+const onlineUsers = new Map<string, WebSocket>();
+const trackOnlineStateOfUsers = new Map<string, { lastSeen: number }>();
+
+wss.on("connection", (ws: WebSocket) => {
   console.log("New Ws connected");
 
   const messageServiceInstance = new MessageService(
@@ -71,105 +76,44 @@ wss.on("connection", (ws: CustomWebSocket) => {
     new ChatRepository(Chat)
   );
 
-  ws.on("message", (message: WebSocket) => {
+  setInterval(() => {
+    console.log(" >>  Check if user disconneted");
+
+    trackOnlineStateOfUsers.forEach((online, userId) => {
+      if (Date.now() - online.lastSeen > 10000) {
+        onlineUsers.delete(userId);
+        trackOnlineStateOfUsers.delete(userId);
+      }
+    });
+
+    console.log(" Online users : ", onlineUsers.size);
+    console.log(" Online users track : ", trackOnlineStateOfUsers.size);
+  }, 15000);
+
+  ws.on("message", (message) => {
     try {
       const data: MessageData = JSON.parse(message.toString());
 
       console.log("Data ", data);
 
       switch (data.action) {
-        case "JOIN":
-          if (data.room) {
-            if (!rooms[data.room]) {
-              // create new room
-              rooms[data.room] = new Set();
-            }
+        case "ONLINE_STATUS_HEARTBEAT":
+          console.log(" >> Online users :  ", onlineUsers.size);
 
-            // check if client already exits in room
-            if (rooms[data.room].has(ws)) {
-              console.log(" Client already exist : ) in ROOM : ", data.room);
-              break;
-            }
+          trackOnlineStateOfUsers.set(data.sender!, {
+            lastSeen: Date.now(),
+          });
 
-            rooms[data.room].add(ws);
-            ws.room = data.room; // Track the client's room
+          if (onlineUsers.has(data.sender!)) return;
+          onlineUsers.set(data.sender!, ws);
 
-            // rooms[data.room].forEach((client) => {
-            //   if (client != ws && client.readyState === WebSocket.OPEN) {
-            //     client.send(
-            //       JSON.stringify({
-            //         isOnline: true,
-            //       })
-            //     );
-            //   }
-            // });
-
-            console.log(`>> Client joined room: ${data.room}`);
-            console.log(">> ROOMS : >> ", rooms);
-          }
-          break;
-
-        case "UPDATE":
-          if (data.room) {
-            const room = rooms[data.room];
-
-            if (room) {
-              room.forEach((client) => {
-                if (client.readyState === WebSocket.OPEN) {
-                  client.send(
-                    JSON.stringify({
-                      sender: null,
-                      receiver: null,
-                      content: "UPDATE",
-                      roomId: data.room,
-                    })
-                  );
-                }
-              });
-            }
-          }
-
-        case "MESSAGE":
-          if (data.room && data.content) {
-            const room = rooms[data.room];
-            if (room) {
-              const mid = new ObjectId();
-
-              messageServiceInstance.storeMessage(
-                mid,
-                data.sender!,
-                data.receiver!,
-                data.content!,
-                data.room!
+          wss.clients.forEach((client) => {
+            if (client !== ws && client.readyState === WebSocket.OPEN) {
+              client.send(
+                JSON.stringify({ action: data.action, sender: data.sender })
               );
-
-              room.forEach((client) => {
-                if (client.readyState === WebSocket.OPEN) {
-                  client.send(
-                    JSON.stringify({
-                      _id: mid,
-                      sender: data.sender,
-                      receiver: data.receiver,
-                      content: data.content,
-                      createdAt: new Date().toISOString(),
-                    })
-                  );
-                }
-              });
             }
-            console.log("message : ", data.content);
-          }
-          break;
-
-        case "LEAVE":
-          if (ws.room && rooms[ws.room]) {
-            rooms[ws.room].delete(ws);
-            if (rooms[ws.room].size === 0) {
-              delete rooms[ws.room];
-            }
-            console.log(`>> Client left room: ${ws.room}`);
-            ws.room = undefined;
-          }
+          });
           break;
 
         default:
@@ -181,13 +125,15 @@ wss.on("connection", (ws: CustomWebSocket) => {
   });
 
   ws.on("close", () => {
-    // Remove client from its room on disconnect
-    if (ws.room && rooms[ws.room]) {
-      rooms[ws.room].delete(ws);
-      if (rooms[ws.room].size === 0) {
-        delete rooms[ws.room];
+    // console.log(` Client disconnected `);
+    // console.log(" Online Users : ", onlineUsers);
+    for (const [userId, socket] of onlineUsers.entries()) {
+      if (socket === ws) {
+        onlineUsers.delete(userId);
+        trackOnlineStateOfUsers.delete(userId);
+        console.log(`User ${userId} disconnected (WebSocket closed).`);
+        break;
       }
-      console.log(`Client disconnected and left room: ${ws.room}`);
     }
   });
 });
@@ -199,3 +145,106 @@ server.listen(PORT, () => {
   console.log(`API Server listening at http://localhost:${PORT}`);
   console.log(`Websocket endpoint listening at ws://localhost:${PORT}/chat`);
 });
+
+// case "JOIN":
+//   if (data.room) {
+//     if (!rooms[data.room]) {
+//       // create new room
+//       rooms[data.room] = new Set();
+//     }
+
+//     // check if client already exits in room
+//     if (rooms[data.room].has(ws)) {
+//       console.log(" Client already exist : ) in ROOM : ", data.room);
+//       break;
+//     }
+
+//     rooms[data.room].add(ws);
+//     ws.room = data.room; // Track the client's room
+
+// rooms[data.room].forEach((client) => {
+//   if (client != ws && client.readyState === WebSocket.OPEN) {
+//     client.send(
+//       JSON.stringify({
+//         isOnline: true,
+//       })
+//     );
+//   }
+// });
+
+//     console.log(`>> Client joined room: ${data.room}`);
+//     console.log(">> ROOMS : >> ", rooms[0]);
+//   }
+//   break;
+
+// case "UPDATE":
+//   if (data.room) {
+//     const room = rooms[data.room];
+
+//     if (room) {
+//       room.forEach((client) => {
+//         if (client.readyState === WebSocket.OPEN) {
+//           client.send(
+//             JSON.stringify({
+//               sender: null,
+//               receiver: null,
+//               content: "UPDATE",
+//               roomId: data.room,
+//             })
+//           );
+//         }
+//       });
+//     }
+//   }
+
+// case "MESSAGE":
+//   if (data.room && data.content) {
+//     const room = rooms[data.room];
+//     if (room) {
+//       const mid = new ObjectId();
+
+//       messageServiceInstance.storeMessage(
+//         mid,
+//         data.sender!,
+//         data.receiver!,
+//         data.content!,
+//         data.room!
+//       );
+
+//       room.forEach((client) => {
+//         if (client.readyState === WebSocket.OPEN) {
+//           client.send(
+//             JSON.stringify({
+//               _id: mid,
+//               sender: data.sender,
+//               receiver: data.receiver,
+//               content: data.content,
+//               createdAt: new Date().toISOString(),
+//             })
+//           );
+//         }
+//       });
+//     }
+//     console.log("message : ", data.content);
+//   }
+//   break;
+
+// case "LEAVE":
+//   if (ws.room && rooms[ws.room]) {
+//     rooms[ws.room].delete(ws);
+//     if (rooms[ws.room].size === 0) {
+//       delete rooms[ws.room];
+//     }
+//     console.log(`>> Client left room: ${ws.room}`);
+//     ws.room = undefined;
+//   }
+//   break;
+
+// Remove client from its room on disconnect
+// if (ws.room && rooms[ws.room]) {
+//   rooms[ws.room].delete(ws);
+//   if (rooms[ws.room].size === 0) {
+//     delete rooms[ws.room];
+//   }
+//   console.log(`Client disconnected and left room: ${ws.room}`);
+// }
