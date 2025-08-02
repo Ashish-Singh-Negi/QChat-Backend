@@ -52,6 +52,7 @@ interface MessageData {
     | "LEAVE"
     | "UPDATE"
     | "ONLINE_STATUS_HEARTBEAT"
+    | "CHECK_ONLINE_STATUS"
     | "OFFLINE_STATUS";
   content: string;
   room?: string;
@@ -68,6 +69,20 @@ const wss = new WebSocketServer({ server, path: "/chat" });
 const onlineUsers = new Map<string, WebSocket>();
 const trackOnlineStateOfUsers = new Map<string, { lastSeen: number }>();
 
+setInterval(() => {
+  console.log("\n ----------------------------  Check if user disconneted \n");
+
+  trackOnlineStateOfUsers.forEach((online, userId) => {
+    if (Date.now() - online.lastSeen > 10000) {
+      onlineUsers.delete(userId);
+      trackOnlineStateOfUsers.delete(userId);
+    }
+  });
+
+  console.log(" Online users : ", onlineUsers.size);
+  console.log(" Online users track : ", trackOnlineStateOfUsers.size);
+}, 15000);
+
 wss.on("connection", (ws: WebSocket) => {
   console.log("New Ws connected");
 
@@ -75,20 +90,6 @@ wss.on("connection", (ws: WebSocket) => {
     new MessageRepository(Message),
     new ChatRepository(Chat)
   );
-
-  setInterval(() => {
-    console.log(" >>  Check if user disconneted");
-
-    trackOnlineStateOfUsers.forEach((online, userId) => {
-      if (Date.now() - online.lastSeen > 10000) {
-        onlineUsers.delete(userId);
-        trackOnlineStateOfUsers.delete(userId);
-      }
-    });
-
-    console.log(" Online users : ", onlineUsers.size);
-    console.log(" Online users track : ", trackOnlineStateOfUsers.size);
-  }, 15000);
 
   ws.on("message", (message) => {
     try {
@@ -98,6 +99,7 @@ wss.on("connection", (ws: WebSocket) => {
 
       switch (data.action) {
         case "ONLINE_STATUS_HEARTBEAT":
+          console.log(" *** ONLINE_STATUS_HEARTBEAT *** ");
           console.log(" >> Online users :  ", onlineUsers.size);
 
           trackOnlineStateOfUsers.set(data.sender!, {
@@ -116,6 +118,16 @@ wss.on("connection", (ws: WebSocket) => {
           });
           break;
 
+        case "CHECK_ONLINE_STATUS":
+          ws.send(
+            JSON.stringify({
+              action: data.action,
+              receiver: data.receiver,
+              isOnline: onlineUsers.has(data.receiver!),
+            })
+          );
+          break;
+
         default:
           console.log("Unknown action:", data.action);
       }
@@ -125,8 +137,8 @@ wss.on("connection", (ws: WebSocket) => {
   });
 
   ws.on("close", () => {
-    // console.log(` Client disconnected `);
-    // console.log(" Online Users : ", onlineUsers);
+    console.log(` !!!!!! Client disconnected \n`);
+    console.log(" Online Users : ", onlineUsers);
     for (const [userId, socket] of onlineUsers.entries()) {
       if (socket === ws) {
         onlineUsers.delete(userId);
