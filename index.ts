@@ -1,18 +1,27 @@
 import express from "express";
-import connectToDB from "./src/utils/dbconnection";
 import http from "http";
 import cors from "cors";
-import apiRoutes from "./src/routes";
-import config from "./src/config";
 import cookieParser from "cookie-parser";
+
+import connectToDB from "./src/utils/dbconnection";
+
 import { WebSocket } from "ws";
 import { WebSocketServer } from "ws";
+
+import apiRoutes from "./src/routes";
+import config from "./src/config";
+
+import Message from "./src/models/Message";
+
 import { errorHandler } from "./src/middlewares/errorhandler";
+
 import MessageService from "./src/services/message";
+
 import MessageRepository from "./src/repositories/MessageRepository";
 import ChatRepository from "./src/repositories/ChatRepository";
+
 import Chat from "./src/models/Chat";
-import Message from "./src/models/Message";
+
 import { ObjectId } from "mongodb";
 
 const app: express.Application = express();
@@ -30,7 +39,7 @@ const server = http.createServer(app);
   }
 })();
 
-// TODO: Config CORS
+// TODO config CORS
 app.use(
   cors({
     origin: process.env.FRONTEND_URL,
@@ -48,14 +57,14 @@ app.use(errorHandler);
 interface MessageData {
   action:
     | "JOIN"
-    | "MESSAGE"
+    | "CHAT_MESSAGE"
     | "LEAVE"
     | "UPDATE"
     | "ONLINE_STATUS_HEARTBEAT"
     | "CHECK_ONLINE_STATUS"
     | "OFFLINE_STATUS";
   content: string;
-  room?: string;
+  chatId?: string;
   sender?: string;
   receiver?: string;
 }
@@ -126,6 +135,47 @@ wss.on("connection", (ws: WebSocket) => {
               isOnline: onlineUsers.has(data.receiver!),
             })
           );
+          break;
+
+        case "CHAT_MESSAGE":
+          if (data.sender && data.receiver && data.chatId && data.content) {
+            const content = data.content.trim();
+
+            const isoTimeFormatOfMessageSendAt = new Date().toISOString();
+            const messageId = new ObjectId();
+
+            messageServiceInstance.storeMessage(
+              messageId,
+              data.sender,
+              data.receiver,
+              content,
+              data.chatId
+            );
+
+            const receiver = onlineUsers.get(data.receiver);
+            if (receiver)
+              receiver?.send(
+                JSON.stringify({
+                  action: "CHAT_MESSAGE",
+                  _id: messageId,
+                  sender: data.sender,
+                  receiver: data.receiver,
+                  content: content,
+                  createdAt: isoTimeFormatOfMessageSendAt,
+                })
+              );
+
+            ws.send(
+              JSON.stringify({
+                action: "CHAT_MESSAGE",
+                _id: messageId,
+                sender: data.sender,
+                receiver: data.receiver,
+                content: content,
+                createdAt: isoTimeFormatOfMessageSendAt,
+              })
+            );
+          }
           break;
 
         default:
