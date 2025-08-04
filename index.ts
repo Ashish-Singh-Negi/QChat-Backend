@@ -138,44 +138,51 @@ wss.on("connection", (ws: WebSocket) => {
           break;
 
         case "CHAT_MESSAGE":
-          if (data.sender && data.receiver && data.chatId && data.content) {
+          if (
+            data.sender &&
+            data.receiver &&
+            data.chatId &&
+            data.content.trim()
+          ) {
             const content = data.content.trim();
+            if (!content) break;
 
-            const isoTimeFormatOfMessageSendAt = new Date().toISOString();
-            const messageId = new ObjectId();
+            try {
+              const messageId = new ObjectId();
+              const createdAt = new Date().toISOString();
 
-            messageServiceInstance.storeMessage(
-              messageId,
-              data.sender,
-              data.receiver,
-              content,
-              data.chatId
-            );
-
-            const receiver = onlineUsers.get(data.receiver);
-            if (receiver)
-              receiver?.send(
-                JSON.stringify({
-                  action: "CHAT_MESSAGE",
-                  _id: messageId,
-                  sender: data.sender,
-                  receiver: data.receiver,
-                  content: content,
-                  createdAt: isoTimeFormatOfMessageSendAt,
-                })
+              messageServiceInstance.storeMessage(
+                messageId,
+                data.sender,
+                data.receiver,
+                content,
+                data.chatId
               );
 
-            ws.send(
-              JSON.stringify({
+              const payload = {
                 action: "CHAT_MESSAGE",
                 _id: messageId,
                 sender: data.sender,
                 receiver: data.receiver,
-                content: content,
-                createdAt: isoTimeFormatOfMessageSendAt,
-              })
-            );
+                content,
+                createdAt,
+              };
+
+              const receiverSocket = onlineUsers.get(data.receiver);
+              receiverSocket?.send(JSON.stringify(payload));
+
+              ws.send(JSON.stringify(payload)); // echo back to sender
+            } catch (err) {
+              console.error("CHAT_MESSAGE error:", err);
+              ws.send(
+                JSON.stringify({
+                  action: "ERROR",
+                  message: "Message failed to send.",
+                })
+              );
+            }
           }
+          break;
           break;
 
         default:
