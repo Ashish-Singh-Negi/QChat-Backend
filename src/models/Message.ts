@@ -26,10 +26,10 @@ const MessageSchema = new Schema(
       type: Boolean,
       default: false,
     },
-    // isStar: {
-    //   type: Boolean,
-    //   default: false,
-    // },
+    status: {
+      type: String,
+      enum: ["SEND", "DELIVERED", "SEEN"],
+    },
     visibleToEveryone: {
       type: Boolean,
       default: true,

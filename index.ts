@@ -54,26 +54,37 @@ app.use(config.api.prefix, apiRoutes);
 
 app.use(errorHandler);
 
-interface MessageData {
-  action:
-    | "JOIN"
-    | "CHAT_MESSAGE"
-    | "LEAVE"
-    | "UPDATE"
-    | "ONLINE_STATUS_HEARTBEAT"
-    | "CHECK_ONLINE_STATUS"
-    | "OFFLINE_STATUS";
+type SendMessage = {
+  action: "CHAT_MESSAGE";
   content: string;
-  chatId?: string;
-  sender?: string;
-  receiver?: string;
-}
+  chatId: string;
+  sender: string;
+  receiver: string;
+};
+
+type OnlineStatusHeartbeat = {
+  action: "ONLINE_STATUS_HEARTBEAT";
+  sender: string;
+};
+
+type CheckUserOnlineStatus = {
+  action: "CHECK_ONLINE_STATUS";
+  receiver: string;
+};
+
+type AckMessage = {
+  action: "MESSAGE_DELIVERED_ACKNOWLEDGEMENT";
+  sender: string;
+  _id: string;
+};
+
+type RoomMessage = {
+  action: "ROOM_MESSAGE";
+  content: string;
+};
 
 // Create a WebSocket server
 const wss = new WebSocketServer({ server, path: "/chat" });
-
-// Object to store rooms and their clients
-// const rooms: { [key: string]: WebSocket } = {};
 
 const onlineUsers = new Map<string, WebSocket>();
 const trackOnlineStateOfUsers = new Map<string, { lastSeen: number }>();
@@ -102,7 +113,11 @@ wss.on("connection", (ws: WebSocket) => {
 
   ws.on("message", (message) => {
     try {
-      const data: MessageData = JSON.parse(message.toString());
+      const data:
+        | SendMessage
+        | AckMessage
+        | OnlineStatusHeartbeat
+        | CheckUserOnlineStatus = JSON.parse(message.toString());
 
       console.log("Data ", data);
 
@@ -151,14 +166,6 @@ wss.on("connection", (ws: WebSocket) => {
               const messageId = new ObjectId();
               const createdAt = new Date().toISOString();
 
-              messageServiceInstance.storeMessage(
-                messageId,
-                data.sender,
-                data.receiver,
-                content,
-                data.chatId
-              );
-
               const payload = {
                 action: "CHAT_MESSAGE",
                 _id: messageId,
@@ -169,7 +176,18 @@ wss.on("connection", (ws: WebSocket) => {
               };
 
               const receiverSocket = onlineUsers.get(data.receiver);
-              receiverSocket?.send(JSON.stringify(payload));
+              if (receiverSocket) receiverSocket?.send(JSON.stringify(payload));
+
+              // TODO implement Message notification if user is offline
+
+              messageServiceInstance.storeMessage(
+                messageId,
+                data.sender,
+                data.receiver,
+                content,
+                data.chatId,
+                "SEEN" // ! Dummy value
+              );
 
               ws.send(JSON.stringify(payload)); // echo back to sender
             } catch (err) {
@@ -183,10 +201,22 @@ wss.on("connection", (ws: WebSocket) => {
             }
           }
           break;
+
+        case "MESSAGE_DELIVERED_ACKNOWLEDGEMENT":
+          if (data.sender) {
+            const senderSocket = onlineUsers.get(data.sender);
+            if (senderSocket)
+              senderSocket?.send(
+                JSON.stringify({
+                  action: "MESSAGE_DELIVERED_ACKNOWLEDGEMENT",
+                  _id: data._id,
+                })
+              );
+          }
           break;
 
         default:
-          console.log("Unknown action:", data.action);
+          console.log("Unknown action:", data);
       }
     } catch (error) {
       console.error("Error processing message:", error);
@@ -298,8 +328,6 @@ server.listen(PORT, () => {
 //   }
 //   break;
 
-// case "LEAVE":
-//   if (ws.room && rooms[ws.room]) {
 //     rooms[ws.room].delete(ws);
 //     if (rooms[ws.room].size === 0) {
 //       delete rooms[ws.room];

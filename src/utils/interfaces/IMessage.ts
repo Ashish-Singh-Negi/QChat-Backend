@@ -10,6 +10,7 @@ export interface IMessage {
   isStar: boolean;
   visibleToEveryone: boolean;
   visibleToSender: boolean;
+  status: "SEND" | "DELIVERED" | "SEEN";
   createdAt: Date;
   updatedAt: Date;
 }

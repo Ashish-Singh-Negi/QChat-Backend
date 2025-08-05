@@ -29,7 +29,8 @@ export default class MessageService {
     senderId: string,
     recipientId: string,
     content: string,
-    chatId: string
+    chatId: string,
+    status: "SEND" | "DELIVERED" | "SEEN"
   ) {
     const session = await mongoose.startSession();
     session.startTransaction();
@@ -41,6 +42,7 @@ export default class MessageService {
           content,
           senderId,
           recipientId,
+          status,
         },
         session
       );
@@ -168,6 +170,6 @@ export default class MessageService {
 
     await this.messageRepo.save(messageRecord);
 
-    return messageRecord
+    return messageRecord;
   }
 }
