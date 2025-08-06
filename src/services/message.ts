@@ -3,6 +3,8 @@ import NotFoundError from "../errors/NotFoundError";
 import MessageRepository from "../repositories/MessageRepository";
 import ChatRepository from "../repositories/ChatRepository";
 
+type MessageStatus = "SEND" | "DELIVERED" | "SEEN";
+
 export default class MessageService {
   constructor(
     private messageRepo: MessageRepository,
@@ -30,7 +32,7 @@ export default class MessageService {
     recipientId: string,
     content: string,
     chatId: string,
-    status: "SEND" | "DELIVERED" | "SEEN"
+    status: MessageStatus
   ) {
     const session = await mongoose.startSession();
     session.startTransaction();
@@ -65,6 +67,17 @@ export default class MessageService {
     } finally {
       await session.endSession();
     }
+  }
+
+  async updateMessageStatus(mid: string, status: MessageStatus) {
+    const messageRecord = await this.messageRepo.findByIdAndUpdate(mid, {
+      status: status,
+    });
+
+    if (!messageRecord)
+      throw new NotFoundError({ message: "Update Failed: Message Not Found" });
+
+    return messageRecord;
   }
 
   async editMessage(mid: string, newContent: string) {

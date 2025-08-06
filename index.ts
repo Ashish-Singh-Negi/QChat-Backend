@@ -175,21 +175,24 @@ wss.on("connection", (ws: WebSocket) => {
                 createdAt,
               };
 
-              const receiverSocket = onlineUsers.get(data.receiver);
-              if (receiverSocket) receiverSocket?.send(JSON.stringify(payload));
-
               // TODO implement Message notification if user is offline
 
-              messageServiceInstance.storeMessage(
-                messageId,
-                data.sender,
-                data.receiver,
-                content,
-                data.chatId,
-                "SEEN" // ! Dummy value
-              );
-
-              ws.send(JSON.stringify(payload)); // echo back to sender
+              (async () => {
+                const res = await messageServiceInstance.storeMessage(
+                  messageId,
+                  data.sender,
+                  data.receiver,
+                  content,
+                  data.chatId,
+                  "SEND"
+                );
+                if (res) {
+                  const receiverSocket = onlineUsers.get(data.receiver);
+                  if (receiverSocket)
+                    receiverSocket?.send(JSON.stringify(payload));
+                  ws.send(JSON.stringify({ ...payload, status: "SEND" })); // echo back to sender
+                }
+              })();
             } catch (err) {
               console.error("CHAT_MESSAGE error:", err);
               ws.send(
@@ -204,12 +207,15 @@ wss.on("connection", (ws: WebSocket) => {
 
         case "MESSAGE_DELIVERED_ACKNOWLEDGEMENT":
           if (data.sender) {
+            messageServiceInstance.updateMessageStatus(data._id, "DELIVERED");
+
             const senderSocket = onlineUsers.get(data.sender);
             if (senderSocket)
               senderSocket?.send(
                 JSON.stringify({
                   action: "MESSAGE_DELIVERED_ACKNOWLEDGEMENT",
                   _id: data._id,
+                  status: "DELIVERED",
                 })
               );
           }

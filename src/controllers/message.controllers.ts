@@ -59,7 +59,7 @@ const storeMessage = expressAsyncHandler(
       recipientId,
       content.trim(),
       chatId,
-      "DELIVERED"
+      "SEND"
     );
 
     return httpStatus.success(res, storedMessage, "Message sent successfully.");
