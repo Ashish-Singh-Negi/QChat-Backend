@@ -175,24 +175,22 @@ wss.on("connection", (ws: WebSocket) => {
                 createdAt,
               };
 
+              const receiverSocket = onlineUsers.get(data.receiver);
+              if (receiverSocket) receiverSocket?.send(JSON.stringify(payload));
+
               // TODO implement Message notification if user is offline
 
-              (async () => {
-                const res = await messageServiceInstance.storeMessage(
-                  messageId,
-                  data.sender,
-                  data.receiver,
-                  content,
-                  data.chatId,
-                  "SEND"
-                );
-                if (res) {
-                  const receiverSocket = onlineUsers.get(data.receiver);
-                  if (receiverSocket)
-                    receiverSocket?.send(JSON.stringify(payload));
-                  ws.send(JSON.stringify({ ...payload, status: "SEND" })); // echo back to sender
-                }
-              })();
+              const status = receiverSocket ? "DELIVERED" : "SEND";
+              messageServiceInstance.storeMessage(
+                messageId,
+                data.sender,
+                data.receiver,
+                content,
+                data.chatId,
+                status
+              );
+
+              ws.send(JSON.stringify({ ...payload, status: "SEND" })); // echo back to sender
             } catch (err) {
               console.error("CHAT_MESSAGE error:", err);
               ws.send(
@@ -207,9 +205,11 @@ wss.on("connection", (ws: WebSocket) => {
 
         case "MESSAGE_DELIVERED_ACKNOWLEDGEMENT":
           if (data.sender) {
-            messageServiceInstance.updateMessageStatus(data._id, "DELIVERED");
-
             const senderSocket = onlineUsers.get(data.sender);
+
+            if (!senderSocket)
+              messageServiceInstance.updateMessageStatus(data._id, "DELIVERED");
+
             if (senderSocket)
               senderSocket?.send(
                 JSON.stringify({
@@ -250,104 +250,3 @@ server.listen(PORT, () => {
   console.log(`API Server listening at http://localhost:${PORT}`);
   console.log(`Websocket endpoint listening at ws://localhost:${PORT}/chat`);
 });
-
-// case "JOIN":
-//   if (data.room) {
-//     if (!rooms[data.room]) {
-//       // create new room
-//       rooms[data.room] = new Set();
-//     }
-
-//     // check if client already exits in room
-//     if (rooms[data.room].has(ws)) {
-//       console.log(" Client already exist : ) in ROOM : ", data.room);
-//       break;
-//     }
-
-//     rooms[data.room].add(ws);
-//     ws.room = data.room; // Track the client's room
-
-// rooms[data.room].forEach((client) => {
-//   if (client != ws && client.readyState === WebSocket.OPEN) {
-//     client.send(
-//       JSON.stringify({
-//         isOnline: true,
-//       })
-//     );
-//   }
-// });
-
-//     console.log(`>> Client joined room: ${data.room}`);
-//     console.log(">> ROOMS : >> ", rooms[0]);
-//   }
-//   break;
-
-// case "UPDATE":
-//   if (data.room) {
-//     const room = rooms[data.room];
-
-//     if (room) {
-//       room.forEach((client) => {
-//         if (client.readyState === WebSocket.OPEN) {
-//           client.send(
-//             JSON.stringify({
-//               sender: null,
-//               receiver: null,
-//               content: "UPDATE",
-//               roomId: data.room,
-//             })
-//           );
-//         }
-//       });
-//     }
-//   }
-
-// case "MESSAGE":
-//   if (data.room && data.content) {
-//     const room = rooms[data.room];
-//     if (room) {
-//       const mid = new ObjectId();
-
-//       messageServiceInstance.storeMessage(
-//         mid,
-//         data.sender!,
-//         data.receiver!,
-//         data.content!,
-//         data.room!
-//       );
-
-//       room.forEach((client) => {
-//         if (client.readyState === WebSocket.OPEN) {
-//           client.send(
-//             JSON.stringify({
-//               _id: mid,
-//               sender: data.sender,
-//               receiver: data.receiver,
-//               content: data.content,
-//               createdAt: new Date().toISOString(),
-//             })
-//           );
-//         }
-//       });
-//     }
-//     console.log("message : ", data.content);
-//   }
-//   break;
-
-//     rooms[ws.room].delete(ws);
-//     if (rooms[ws.room].size === 0) {
-//       delete rooms[ws.room];
-//     }
-//     console.log(`>> Client left room: ${ws.room}`);
-//     ws.room = undefined;
-//   }
-//   break;
-
-// Remove client from its room on disconnect
-// if (ws.room && rooms[ws.room]) {
-//   rooms[ws.room].delete(ws);
-//   if (rooms[ws.room].size === 0) {
-//     delete rooms[ws.room];
-//   }
-//   console.log(`Client disconnected and left room: ${ws.room}`);
-// }
