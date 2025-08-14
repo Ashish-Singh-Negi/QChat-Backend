@@ -22,8 +22,7 @@ const FriendsSchema = new Schema(
       type: String,
       default: null,
     },
-    // id -> Friend Id
-    id: {
+    fid: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
     },
@@ -38,8 +37,11 @@ const ChatsSchema = new Schema(
       type: String,
       default: null,
     },
-    // id -> chat id
-    id: {
+    contactId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+    },
+    chatId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Chat",
     },

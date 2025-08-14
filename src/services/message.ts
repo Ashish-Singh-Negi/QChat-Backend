@@ -42,7 +42,8 @@ export default class MessageService {
         {
           _id: mid,
           content,
-          senderId,
+          senderId,  
+          chatId,
           recipientId,
           status,
         },

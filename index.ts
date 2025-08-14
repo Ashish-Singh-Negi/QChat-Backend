@@ -136,7 +136,11 @@ wss.on("connection", (ws: WebSocket) => {
           wss.clients.forEach((client) => {
             if (client !== ws && client.readyState === WebSocket.OPEN) {
               client.send(
-                JSON.stringify({ action: data.action, sender: data.sender })
+                JSON.stringify({
+                  action: data.action,
+                  sender: data.sender,
+                  isOnline: true,
+                })
               );
             }
           });
@@ -171,6 +175,7 @@ wss.on("connection", (ws: WebSocket) => {
                 _id: messageId,
                 sender: data.sender,
                 receiver: data.receiver,
+                chatId: data.chatId,
                 content,
                 createdAt,
               };

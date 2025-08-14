@@ -151,8 +151,8 @@ export default class FriendRequestService {
   }
 
   async addToFriends(sender: IUser, recipient: IUser, rid: string) {
-    sender.friends.push({ id: recipient._id, name: recipient.username });
-    recipient.friends.push({ id: sender._id, name: sender.username });
+    sender.friends.push({ fid: recipient._id, name: recipient.username });
+    recipient.friends.push({ fid: sender._id, name: sender.username });
 
     sender.friendRequests = sender.friendRequests.filter(
       (requestId) => requestId.toString() !== rid

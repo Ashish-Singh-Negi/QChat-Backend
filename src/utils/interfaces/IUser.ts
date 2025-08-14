@@ -7,10 +7,14 @@ export interface IUser {
   about: string;
   isOnline: boolean;
   starMessages: string[];
-  chats: string[];
+  chats: {
+    name: string;
+    contactId: string;
+    chatId: string;
+  }[];
   friends: {
     name?: string;
-    id: string;
+    fid: string;
   }[];
   friendRequests: string[];
   createdAt: Date;

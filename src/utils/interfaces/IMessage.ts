@@ -4,6 +4,7 @@ export interface IMessage {
   _id: ObjectId;
   senderId: string;
   recipientId: string;
+  chatId: string;
   content: string;
   isEdited: boolean;
   isPinned: boolean;
