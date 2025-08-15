@@ -54,34 +54,35 @@ app.use(config.api.prefix, apiRoutes);
 
 app.use(errorHandler);
 
-type SendMessage = {
+interface SendMessage {
   action: "CHAT_MESSAGE";
   content: string;
   chatId: string;
   sender: string;
   receiver: string;
-};
+}
 
-type OnlineStatusHeartbeat = {
+interface OnlineStatusHeartbeat {
   action: "ONLINE_STATUS_HEARTBEAT";
   sender: string;
-};
+}
 
-type CheckUserOnlineStatus = {
+interface CheckUserOnlineStatus {
   action: "CHECK_ONLINE_STATUS";
   receiver: string;
-};
+}
 
-type AckMessage = {
+interface AckMessage {
   action: "MESSAGE_DELIVERED_ACKNOWLEDGEMENT";
-  sender: string;
   _id: string;
-};
+  sender: string;
+  chatId: string;
+}
 
-type RoomMessage = {
+interface RoomMessage {
   action: "ROOM_MESSAGE";
   content: string;
-};
+}
 
 // Create a WebSocket server
 const wss = new WebSocketServer({ server, path: "/chat" });
@@ -221,6 +222,7 @@ wss.on("connection", (ws: WebSocket) => {
                   action: "MESSAGE_DELIVERED_ACKNOWLEDGEMENT",
                   _id: data._id,
                   status: "DELIVERED",
+                  chatId: data.chatId,
                 })
               );
           }

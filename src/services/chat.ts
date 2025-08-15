@@ -115,6 +115,7 @@ export default class ChatService {
       const message = await this.messageRepo.createMessage(
         {
           content: messageContent,
+          chatId: crid,
         },
         session
       );
