@@ -1,11 +1,11 @@
 import { Request, Response } from "express";
 import expressAsyncHandler from "express-async-handler";
 import BadRequestError from "../../errors/BadRequestError";
-import AuthService from "../../services/auth";
+import AuthService from "../../services/auth.service";
 import UserRepository from "../../repositories/UserRepository";
 import User from "../../models/User";
 import httpStatus from "../../utils/response-codes";
-import { IUserInputDTO } from "../../utils/interfaces/IUser";
+import { IUserInputDTO } from "../../interfaces/IUser";
 
 /**
  * POST : /register

@@ -4,9 +4,9 @@ import { signinController } from "../../controllers/auth/signin";
 import { signupController } from "../../controllers/auth/signup";
 import { refreshController } from "../../controllers/auth/refresh";
 
-import { validateRequestBody } from "../../utils/validators";
-import { signupSchema } from "../../utils/validators/signup.validator";
-import { signinSchema } from "../../utils/validators/signin.validator";
+import { validateRequestBody } from "../../validators";
+import { signupSchema } from "../../validators/signup.validator";
+import { signinSchema } from "../../validators/signin.validator";
 
 export const router = Router();
 

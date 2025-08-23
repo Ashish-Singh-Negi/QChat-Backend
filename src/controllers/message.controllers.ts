@@ -5,14 +5,9 @@ import httpStatus from "../utils/response-codes";
 
 import BadRequestError from "../errors/BadRequestError";
 
-import MessageService from "../services/message";
+import MessageService from "../services/message.service";
 
-import MessageRepository from "../repositories/MessageRepository";
-import ChatRepository from "../repositories/ChatRepository";
-
-import Message from "../models/Message";
-import Chat from "../models/Chat";
-import { validateObjectId } from "../utils/validators/mongoId.validator";
+import { validateObjectId } from "../validators/mongoId.validator";
 
 /**
  * GET /api/v1/messages/:mid
@@ -22,10 +17,7 @@ const getMessage = expressAsyncHandler(async (req: Request, res: Response) => {
   const { mid } = req.params;
   validateObjectId(mid, "message Id");
 
-  const messageServiceInstance = new MessageService(
-    new MessageRepository(Message),
-    new ChatRepository(Chat)
-  );
+  const messageServiceInstance = new MessageService();
   const message = await messageServiceInstance.getMessage(mid);
 
   return httpStatus.success(res, message, "message retrived successfully");
@@ -49,10 +41,7 @@ const storeMessage = expressAsyncHandler(
     console.log("Sent to:", recipientId);
     console.log("Sent by:", senderId);
 
-    const messageServiceInstance = new MessageService(
-      new MessageRepository(Message),
-      new ChatRepository(Chat)
-    );
+    const messageServiceInstance = new MessageService();
     const { storedMessage } = await messageServiceInstance.storeMessage(
       mid,
       senderId,
@@ -77,10 +66,7 @@ const editMessage = expressAsyncHandler(async (req: Request, res: Response) => {
   validateObjectId(mid, "message Id");
   const { content } = req.body;
 
-  const messageServiceInstance = new MessageService(
-    new MessageRepository(Message),
-    new ChatRepository(Chat)
-  );
+  const messageServiceInstance = new MessageService();
 
   const { editedMessage } = await messageServiceInstance.editMessage(
     mid,
@@ -112,10 +98,7 @@ const updatePinMessage = expressAsyncHandler(
     validateObjectId(crid, "chat Id");
     // ------------------ validation END-----------------------------
 
-    const messageServiceInstance = new MessageService(
-      new MessageRepository(Message),
-      new ChatRepository(Chat)
-    );
+    const messageServiceInstance = new MessageService();
     const { message } = await messageServiceInstance.pinMessage(crid, mid);
 
     return httpStatus.success(res, { message }, "Message Pinned");
@@ -131,10 +114,7 @@ const deleteMessageForEveryone = expressAsyncHandler(
     const { mid } = req.params;
     validateObjectId(mid, "message Id");
 
-    const messageServiceInstance = new MessageService(
-      new MessageRepository(Message),
-      new ChatRepository(Chat)
-    );
+    const messageServiceInstance = new MessageService();
     await messageServiceInstance.deleteMessageForEveryone(mid);
 
     return httpStatus.noContent(res);
@@ -150,10 +130,7 @@ const deleteMessageForMe = expressAsyncHandler(
     const { mid } = req.params;
     validateObjectId(mid, "message Id");
 
-    const messageServiceInstance = new MessageService(
-      new MessageRepository(Message),
-      new ChatRepository(Chat)
-    );
+    const messageServiceInstance = new MessageService();
     await messageServiceInstance.deleteMessageForMe(mid);
 
     return httpStatus.noContent(res);

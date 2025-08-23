@@ -3,7 +3,7 @@ import ConflictError from "../errors/ConflictError";
 import FriendRequestRepository from "../repositories/FriendRequestRepository";
 import UserRepository from "../repositories/UserRepository";
 import mongoose, { ClientSession, ObjectId } from "mongoose";
-import { IUser } from "../utils/interfaces/IUser";
+import { IUser } from "../interfaces/IUser";
 import BadRequestError from "../errors/BadRequestError";
 
 export default class FriendRequestService {

@@ -8,11 +8,11 @@ import {
   storeMessage,
 } from "../../controllers/message.controllers";
 
-import { validateRequestBody } from "../../utils/validators";
+import { validateRequestBody } from "../../validators";
 import {
   editMessageSchema,
   storeMessageSchema,
-} from "../../utils/validators/message.validators";
+} from "../../validators/message.validators";
 
 const router = Router();
 

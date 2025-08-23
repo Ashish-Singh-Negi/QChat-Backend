@@ -5,8 +5,8 @@ import {
   updateUserChat,
 } from "../../controllers/user/profile";
 import { searchUser } from "../../controllers/user/search";
-import { validateRequestBody } from "../../utils/validators";
-import { updateUserProfileSchema } from "../../utils/validators/user.validator";
+import { validateRequestBody } from "../../validators";
+import { updateUserProfileSchema } from "../../validators/user.validator";
 
 const router = Router();
 

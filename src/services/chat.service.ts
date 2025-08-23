@@ -7,6 +7,10 @@ import UserRepository from "../repositories/UserRepository";
 import MessageRepository from "../repositories/MessageRepository";
 import ChatRepository from "../repositories/ChatRepository";
 import BadRequestError from "../errors/BadRequestError";
+import MessageService from "./message.service";
+import Message from "../models/Message";
+import Chat from "../models/Chat";
+import User from "../models/User";
 
 const disappearingMessagesDurations = {
   "24 hours": "24h",
@@ -16,11 +20,9 @@ const disappearingMessagesDurations = {
 };
 
 export default class ChatService {
-  constructor(
-    private chatRepo: ChatRepository,
-    private userRepo: UserRepository,
-    private messageRepo: MessageRepository
-  ) {}
+  private chatRepo = new ChatRepository(Chat);
+  private userRepo = new UserRepository(User);
+  private messageRepo = new MessageRepository(Message);
 
   async getChat(crid: string, filter?: string) {
     const chatRecord = await this.chatRepo.findChatById(crid, filter);
@@ -29,7 +31,15 @@ export default class ChatService {
         message: `chat with id ${crid} Not Found`,
       });
 
-    return { chat: chatRecord };
+    const messageServiceInstance = new MessageService();
+
+    const { messages, pagination } =
+      await messageServiceInstance.getAllChatMessage(crid);
+
+    const chatRecordPlainObject = chatRecord.toObject();
+    chatRecordPlainObject.messages = messages;
+
+    return { chat: chatRecordPlainObject, pagination: pagination };
   }
 
   async createChat(userId: string, friendId: string) {

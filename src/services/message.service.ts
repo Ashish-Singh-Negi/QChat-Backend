@@ -2,21 +2,46 @@ import mongoose from "mongoose";
 import NotFoundError from "../errors/NotFoundError";
 import MessageRepository from "../repositories/MessageRepository";
 import ChatRepository from "../repositories/ChatRepository";
+import { getPaginationMeta } from "../utils/pagination";
+import Message from "../models/Message";
+import Chat from "../models/Chat";
 
 type MessageStatus = "SEND" | "DELIVERED" | "SEEN";
 
 export default class MessageService {
-  constructor(
-    private messageRepo: MessageRepository,
-    private chatRepo: ChatRepository
-  ) {}
+  private messageRepo = new MessageRepository(Message);
+  private chatRepo = new ChatRepository(Chat);
 
-  async getAllChatMessage(crid: string) {
-    const chatRecord = await this.chatRepo.findChatById(crid, "messages");
-    if (!chatRecord)
+  async getAllChatMessage(crid: string, page = 1, limit = 30) {
+    const chatRecord = await this.chatRepo.findChatMessagesById(
+      crid,
+      "messages"
+    );
+
+    if (!chatRecord) {
       throw new NotFoundError({ message: "Chat Messages Not Found" });
+    }
 
-    return { messages: chatRecord.messages };
+    const totalMessages = chatRecord.messages.length;
+    const { offset, pagination } = getPaginationMeta(
+      page,
+      limit,
+      totalMessages
+    );
+
+    const populated = await chatRecord.populate({
+      path: "messages",
+      options: {
+        limit,
+        sort: { createdAt: -1 },
+        skip: offset,
+      },
+    });
+
+    return {
+      messages: populated.messages,
+      pagination,
+    };
   }
 
   async getMessage(mid: string) {
@@ -42,7 +67,7 @@ export default class MessageService {
         {
           _id: mid,
           content,
-          senderId,  
+          senderId,
           chatId,
           recipientId,
           status,
@@ -50,7 +75,11 @@ export default class MessageService {
         session
       );
 
-      const chatRecord = await this.chatRepo.findChatById(chatId);
+      const chatRecord = await this.chatRepo.findChatById(
+        chatId,
+        "messages",
+        session
+      );
       if (!chatRecord) throw new NotFoundError({ message: "Chat Not Found" });
 
       chatRecord.messages.push(mid);

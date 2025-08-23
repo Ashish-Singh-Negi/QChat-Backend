@@ -1,13 +1,13 @@
 import { Request, Response } from "express";
 import expressAsyncHandler from "express-async-handler";
 import httpStatus from "../utils/response-codes";
-import FriendRequestService from "../services/friendRequest";
+import FriendRequestService from "../services/friendRequest.service";
 import FriendRequestRepository from "../repositories/FriendRequestRepository";
 import FriendRequest from "../models/FriendRequest";
 import User from "../models/User";
 import UserRepository from "../repositories/UserRepository";
 import BadRequestError from "../errors/BadRequestError";
-import { validateObjectId } from "../utils/validators/mongoId.validator";
+import { validateObjectId } from "../validators/mongoId.validator";
 
 /**
  * GET /friends/requests/:rid

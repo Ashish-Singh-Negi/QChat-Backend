@@ -1,7 +1,7 @@
 import { ClientSession, HydratedDocument } from "mongoose";
 import Message from "../models/Message";
 import BaseRepository from "./BaseRepository";
-import { IMessage } from "../utils/interfaces/IMessage";
+import { IMessage } from "../interfaces/IMessage";
 
 export default class MessageRepository extends BaseRepository<typeof Message> {
   constructor(private messageModel: typeof Message) {

@@ -15,7 +15,7 @@ import Message from "./src/models/Message";
 
 import { errorHandler } from "./src/middlewares/errorhandler";
 
-import MessageService from "./src/services/message";
+import MessageService from "./src/services/message.service";
 
 import MessageRepository from "./src/repositories/MessageRepository";
 import ChatRepository from "./src/repositories/ChatRepository";
@@ -107,10 +107,7 @@ setInterval(() => {
 wss.on("connection", (ws: WebSocket) => {
   console.log("New Ws connected");
 
-  const messageServiceInstance = new MessageService(
-    new MessageRepository(Message),
-    new ChatRepository(Chat)
-  );
+  const messageServiceInstance = new MessageService();
 
   ws.on("message", (message) => {
     try {

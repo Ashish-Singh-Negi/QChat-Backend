@@ -3,18 +3,10 @@ import { Request, Response } from "express";
 import httpStatus from "../utils/response-codes";
 import expressAsyncHandler from "express-async-handler";
 
-import ChatService from "../services/chat";
+import ChatService from "../services/chat.service";
 
-import Chat from "../models/Chat";
-import User from "../models/User";
-import Message from "../models/Message";
-
-import ChatRepository from "../repositories/ChatRepository";
-import UserRepository from "../repositories/UserRepository";
-import MessageRepository from "../repositories/MessageRepository";
-
-import MessageService from "../services/message";
-import { validateObjectId } from "../utils/validators/mongoId.validator";
+import MessageService from "../services/message.service";
+import { validateObjectId } from "../validators/mongoId.validator";
 
 /**
  * GET : /chats/:crid
@@ -27,15 +19,19 @@ const getChatDetails = expressAsyncHandler(
 
     validateObjectId(crid, "Chat Id");
 
-    const chatServiceInstance = new ChatService(
-      new ChatRepository(Chat),
-      new UserRepository(User),
-      new MessageRepository(Message)
+    const chatServiceInstance = new ChatService();
+
+    const { chat, pagination } = await chatServiceInstance.getChat(
+      crid,
+      filter as string
     );
 
-    const { chat } = await chatServiceInstance.getChat(crid, filter as string);
-
-    return httpStatus.success(res, chat, "Chat Details fetched successfully");
+    res.status(200).json({
+      success: true,
+      message: "Chat retrieved successfully",
+      data: chat,
+      pagination: pagination,
+    });
   }
 );
 
@@ -51,11 +47,7 @@ const createChat = expressAsyncHandler(async (req: Request, res: Response) => {
 
   const uid = req.uid;
 
-  const chatServiceInstance = new ChatService(
-    new ChatRepository(Chat),
-    new UserRepository(User),
-    new MessageRepository(Message)
-  );
+  const chatServiceInstance = new ChatService();
   const { chat } = await chatServiceInstance.createChat(
     uid as string,
     fid as string
@@ -78,11 +70,7 @@ const updateChatDisappearingMessagesDurationSetting = expressAsyncHandler(
     const { crid } = req.params;
     validateObjectId(crid, "Chat Id");
 
-    const chatServiceInstance = new ChatService(
-      new ChatRepository(Chat),
-      new UserRepository(User),
-      new MessageRepository(Message)
-    );
+    const chatServiceInstance = new ChatService();
     const { chat } =
       await chatServiceInstance.updateChatDisappearingMessagesDuration(
         crid,
@@ -107,11 +95,7 @@ const disappearChatMessages = expressAsyncHandler(
     const { crid } = req.params;
     validateObjectId(crid, "Chat Id");
 
-    const chatServiceInstance = new ChatService(
-      new ChatRepository(Chat),
-      new UserRepository(User),
-      new MessageRepository(Message)
-    );
+    const chatServiceInstance = new ChatService();
 
     await chatServiceInstance.disappearChatMessages(crid);
 
@@ -123,25 +107,32 @@ const disappearChatMessages = expressAsyncHandler(
 );
 
 /**
- *  GET : /chats/:crid/messages
+ *  GET : /chats/:crid/messages?page=1
  *  req-body {}
  *
  */
 const getChatMessages = expressAsyncHandler(
   async (req: Request, res: Response) => {
     const { crid } = req.params;
+    const { page } = req.query;
     validateObjectId(crid, "Chat Id");
+    console.log("-------------------------------------------------");
+    console.log("🚀 ~ crid:", crid);
+    console.log("🚀 ~ page:", page);
+    console.log("-------------------------------------------------");
 
-    const messageServiceInstance = new MessageService(
-      new MessageRepository(Message),
-      new ChatRepository(Chat)
-    );
-    const { messages } = await messageServiceInstance.getAllChatMessage(crid);
+    const messageServiceInstance = new MessageService();
+    const { messages, pagination } =
+      await messageServiceInstance.getAllChatMessage(crid, Number(page));
 
     if (!messages.length)
-      httpStatus.success(res, messages, "No messages Found");
+      httpStatus.success(res, { messages, pagination }, "No messages Found");
 
-    return httpStatus.success(res, messages, "messages retrived successfully");
+    return httpStatus.success(
+      res,
+      { messages, pagination },
+      "messages retrived successfully"
+    );
   }
 );
 
@@ -153,11 +144,7 @@ const clearChat = expressAsyncHandler(async (req: Request, res: Response) => {
   const { crid } = req.params;
   validateObjectId(crid, "Chat Id");
 
-  const chatServiceInstance = new ChatService(
-    new ChatRepository(Chat),
-    new UserRepository(User),
-    new MessageRepository(Message)
-  );
+  const chatServiceInstance = new ChatService();
 
   await chatServiceInstance.clearChat(crid);
 

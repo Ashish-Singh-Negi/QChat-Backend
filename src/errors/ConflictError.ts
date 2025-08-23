@@ -1,22 +1,19 @@
 import { CustomError } from "./CustomError";
 
 export default class ConflictError extends CustomError {
-  private static readonly _statusCode = 409;
-  private readonly _code: number;
+  private readonly _statusCode = 409;
   private readonly _logging: boolean;
   private readonly _context: { [key: string]: string };
 
   constructor(params: {
-    code?: number;
     message?: string;
     logging?: boolean;
     context?: { [key: string]: string };
   }) {
-    const { code, message, logging } = params || {};
+    const { message, logging } = params || {};
 
     super(message || "Conflict");
 
-    this._code = code || ConflictError._statusCode;
     this._logging = logging || false;
     this._context = params?.context || {};
 
@@ -29,7 +26,7 @@ export default class ConflictError extends CustomError {
   }
 
   get statusCode() {
-    return this._code;
+    return this._statusCode;
   }
 
   get logging() {

@@ -1,7 +1,7 @@
 import { ClientSession } from "mongoose";
 import User from "../models/User";
 import BaseRepository from "./BaseRepository";
-import { IUserInputDTO } from "../utils/interfaces/IUser";
+import { IUserInputDTO } from "../interfaces/IUser";
 
 const TAILWIND_COLORS = [
   "slate",

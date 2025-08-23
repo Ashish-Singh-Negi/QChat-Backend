@@ -4,7 +4,7 @@ import expressAsyncHandler from "express-async-handler";
 import httpStatus from "../../utils/response-codes";
 import config from "../../config";
 import { CJwtPayload } from "../../middlewares/verifyUser.middlewares";
-import AuthService from "../../services/auth";
+import AuthService from "../../services/auth.service";
 import UserRepository from "../../repositories/UserRepository";
 import User from "../../models/User";
 import jwt from "jsonwebtoken";

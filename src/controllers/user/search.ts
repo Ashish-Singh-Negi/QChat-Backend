@@ -1,7 +1,7 @@
 import { Request, Response } from "express";
 import expressAsyncHandler from "express-async-handler";
 import BadRequestError from "../../errors/BadRequestError";
-import UserService from "../../services/user";
+import UserService from "../../services/user.service";
 import UserRepository from "../../repositories/UserRepository";
 import User from "../../models/User";
 import httpStatus from "../../utils/response-codes";

@@ -4,7 +4,7 @@ import config from "../config";
 import BadRequestError from "../errors/BadRequestError";
 import ConflictError from "../errors/ConflictError";
 import UserRepository from "../repositories/UserRepository";
-import { IUser, IUserInputDTO } from "../utils/interfaces/IUser";
+import { IUser, IUserInputDTO } from "../interfaces/IUser";
 
 const ACCESS_TOKEN_EXP = 1000 * 60 * 15;
 const REFRESH_TOKEN_EXP = 1000 * 60 * 60 * 24 * 7;

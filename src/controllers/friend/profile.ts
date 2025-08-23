@@ -1,9 +1,9 @@
 import { Request, Response } from "express";
-import FriendService from "../../services/friend";
+import FriendService from "../../services/friend.service";
 import FriendRepository from "../../repositories/FirendRepository";
 import User from "../../models/User";
 import httpStatus from "../../utils/response-codes";
-import { validateObjectId } from "../../utils/validators/mongoId.validator";
+import { validateObjectId } from "../../validators/mongoId.validator";
 import expressAsyncHandler from "express-async-handler";
 
 /**

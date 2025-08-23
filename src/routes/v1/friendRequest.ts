@@ -5,8 +5,8 @@ import {
   rejectFriendRequest,
   sendFriendRequest,
 } from "../../controllers/friend-request.controllers";
-import { validateRequestBody } from "../../utils/validators";
-import { sendFriendRequestSchema } from "../../utils/validators/friendRequest.validator";
+import { validateRequestBody } from "../../validators";
+import { sendFriendRequestSchema } from "../../validators/friendRequest.validator";
 
 const router = Router();
 

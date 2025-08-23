@@ -7,15 +7,15 @@ import {
   getChatDetails,
   updateChatDisappearingMessagesDurationSetting,
 } from "../../controllers/chat.controllers";
-import { validateRequestBody } from "../../utils/validators";
+import { validateRequestBody } from "../../validators";
 import {
   createChatSchema,
   updateChatDisappearingDurationSchema,
-} from "../../utils/validators/chat.validators";
+} from "../../validators/chat.validators";
 
 const router = Router();
 
-// GET  /api/v1/chats/:crid/messages
+// GET  /api/v1/chats/:crid/messages?page=1
 router.get("/:crid/messages", getChatMessages);
 
 // GET  /api/v1/chats/:crid

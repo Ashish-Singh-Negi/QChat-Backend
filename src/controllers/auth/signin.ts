@@ -3,7 +3,7 @@ import { Request, Response } from "express";
 import httpStatus from "../../utils/response-codes";
 import expressAsyncHandler from "express-async-handler";
 
-import AuthService from "../../services/auth";
+import AuthService from "../../services/auth.service";
 
 import User from "../../models/User";
 import UserRepository from "../../repositories/UserRepository";
