@@ -8,17 +8,13 @@ export default class ChatRepository extends BaseRepository<typeof Chat> {
     super(chatModel);
   }
 
-  async findChatMessagesById(crid: string, filter = "-__v") {
-    const query = await this.chatModel.findById(crid).select(filter);
+  findChatMessagesById(crid: string, filter = "-__v") {
+    const query = this.chatModel.findById(crid).select(filter);
     return query;
   }
 
-  async findChatById(
-    crid: string,
-    filter = "-__v",
-    session?: ClientSession
-  ) {
-    const query = await this.chatModel.findById(crid).select(filter);
+  findChatById(crid: string, filter = "-__v", session?: ClientSession) {
+    const query = this.chatModel.findById(crid).select(filter);
 
     if (session) {
       query.session(session);
@@ -27,16 +23,16 @@ export default class ChatRepository extends BaseRepository<typeof Chat> {
     return query;
   }
 
-  async findOneByParticipants(participants: string[]) {
-    return await this.chatModel.findOne({
+  findOneByParticipants(participants: string[]) {
+    return this.chatModel.findOne({
       participants: {
         $all: participants,
       },
     });
   }
 
-  async createChat(data: Partial<IChat>, session: ClientSession) {
-    return await new this.chatModel({
+  createChat(data: Partial<IChat>, session: ClientSession) {
+    return new this.chatModel({
       ...data,
     }).save({ session });
   }

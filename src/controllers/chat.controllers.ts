@@ -114,8 +114,11 @@ const disappearChatMessages = expressAsyncHandler(
 const getChatMessages = expressAsyncHandler(
   async (req: Request, res: Response) => {
     const { crid } = req.params;
-    const { page } = req.query;
+    let { page } = req.query;
+    let { limit } = req.query;
+
     validateObjectId(crid, "Chat Id");
+
     console.log("-------------------------------------------------");
     console.log("🚀 ~ crid:", crid);
     console.log("🚀 ~ page:", page);
@@ -123,10 +126,18 @@ const getChatMessages = expressAsyncHandler(
 
     const messageServiceInstance = new MessageService();
     const { messages, pagination } =
-      await messageServiceInstance.getAllChatMessage(crid, Number(page));
+      await messageServiceInstance.getAllChatMessage(
+        crid,
+        Number(page),
+        Number(limit)
+      );
 
     if (!messages.length)
-      httpStatus.success(res, { messages, pagination }, "No messages Found");
+      return httpStatus.success(
+        res,
+        { messages, pagination },
+        "No messages Found"
+      );
 
     return httpStatus.success(
       res,

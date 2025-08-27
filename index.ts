@@ -11,16 +11,9 @@ import { WebSocketServer } from "ws";
 import apiRoutes from "./src/routes";
 import config from "./src/config";
 
-import Message from "./src/models/Message";
-
 import { errorHandler } from "./src/middlewares/errorhandler";
 
 import MessageService from "./src/services/message.service";
-
-import MessageRepository from "./src/repositories/MessageRepository";
-import ChatRepository from "./src/repositories/ChatRepository";
-
-import Chat from "./src/models/Chat";
 
 import { ObjectId } from "mongodb";
 
