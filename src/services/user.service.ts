@@ -34,7 +34,7 @@ export default class UserService {
     try {
       let updatedUserProfile;
 
-      if (dto.about)
+      if (typeof dto.about === "string")
         updatedUserProfile = await this.userRepo.findByIdAndUpdate(userId, {
           about: dto.about,
         });

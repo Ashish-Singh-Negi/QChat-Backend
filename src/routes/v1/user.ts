@@ -1,9 +1,5 @@
 import { Router } from "express";
-import {
-  getProfile,
-  updateProfile,
-  updateUserChat,
-} from "../../controllers/user/profile";
+import { getProfile, updateProfile } from "../../controllers/user/profile";
 import { searchUser } from "../../controllers/user/search";
 import { validateRequestBody } from "../../validators";
 import { updateUserProfileSchema } from "../../validators/user.validator";

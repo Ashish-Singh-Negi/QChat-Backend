@@ -35,17 +35,15 @@ const updateProfile = expressAsyncHandler(
       profilePic,
     };
 
+    console.log(dto);
+
     const userServiceinstance = new UserService(new UserRepository(User));
     const { updatedUserProfile } = await userServiceinstance.updateUserProfile(
       uid!,
       dto
     );
 
-    return httpStatus.success(
-      res,
-      updatedUserProfile,
-      "Profile Updated successfully"
-    );
+    return httpStatus.success(res, updatedUserProfile, "Profile Updated successfully");
   }
 );
 
