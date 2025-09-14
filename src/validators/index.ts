@@ -2,7 +2,7 @@ import { NextFunction, Request, Response } from "express";
 import { AnySchema } from "joi";
 
 /**
- * @param schema - Zod schema to validate the request body
+ * @param schema - Joi schema to validate the request body
  * @returns - Middleware function to validate the request body
  */
 export const validateRequestBody = (schema: AnySchema) => {
@@ -28,7 +28,7 @@ export const validateRequestBody = (schema: AnySchema) => {
 };
 
 /**
- * @param schema - Zod schema to validate the request body
+ * @param schema - Joi schema to validate the request body
  * @returns - Middleware function to validate the request query params
  */
 export const validateQueryParams = (schema: AnySchema) => {

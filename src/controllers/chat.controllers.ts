@@ -124,6 +124,8 @@ const getChatMessages = expressAsyncHandler(
     console.log("🚀 ~ page:", page);
     console.log("-------------------------------------------------");
 
+    
+
     const messageServiceInstance = new MessageService();
     const { messages, pagination } =
       await messageServiceInstance.getAllChatMessage(

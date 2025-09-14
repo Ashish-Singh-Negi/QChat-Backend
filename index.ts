@@ -77,6 +77,14 @@ interface RoomMessage {
   content: string;
 }
 
+interface PinMessage {
+  action: "PIN";
+  chatId: string;
+  _id: string;
+  receiver: string;
+  isPinned: boolean;
+}
+
 // Create a WebSocket server
 const wss = new WebSocketServer({ server, path: "/chat" });
 
@@ -108,7 +116,8 @@ wss.on("connection", (ws: WebSocket) => {
         | SendMessage
         | AckMessage
         | OnlineStatusHeartbeat
-        | CheckUserOnlineStatus = JSON.parse(message.toString());
+        | CheckUserOnlineStatus
+        | PinMessage = JSON.parse(message.toString());
 
       console.log("Data ", data);
 
@@ -174,7 +183,7 @@ wss.on("connection", (ws: WebSocket) => {
               const receiverSocket = onlineUsers.get(data.receiver);
               if (receiverSocket) receiverSocket?.send(JSON.stringify(payload));
 
-              // TODO implement Message notification if user is offline
+              // TODO send push notification if user is offline
 
               const status = receiverSocket ? "DELIVERED" : "SEND";
               messageServiceInstance.storeMessage(
@@ -215,6 +224,27 @@ wss.on("connection", (ws: WebSocket) => {
                   chatId: data.chatId,
                 })
               );
+          }
+          break;
+
+        case "PIN":
+          if (data._id) {
+            const payload = {
+              action: data.action,
+              receiver: data.receiver,
+              chatId: data.chatId,
+              _id: data._id,
+              isPinned: data.isPinned,
+            };
+
+            console.log(payload);
+
+            const receiverSocket = onlineUsers.get(data.receiver);
+            if (receiverSocket) {
+              receiverSocket.send(JSON.stringify(payload));
+            }
+
+            ws.send(JSON.stringify(payload));
           }
           break;
 

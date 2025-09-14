@@ -12,7 +12,10 @@ export default class MessageService {
   private messageRepo = new MessageRepository(Message);
   private chatRepo = new ChatRepository(Chat);
 
-  async getAllChatMessage(crid: string, page = 1, limit = 30) {
+  async getAllChatMessage(crid: string, page?: number, limit?: number) {
+    console.log("🚀 ~ MessageService ~ getAllChatMessage ~ limit:", limit);
+    console.log("🚀 ~ MessageService ~ getAllChatMessage ~ page:", page);
+
     const chatRecord = await this.chatRepo.findChatMessagesById(
       crid,
       "messages"
@@ -23,6 +26,20 @@ export default class MessageService {
     }
 
     const totalMessages = chatRecord.messages.length;
+
+    if (!page || !limit) {
+      const populated = await chatRecord.populate({
+        path: "messages",
+        options: {
+          sort: { createdAt: -1 },
+        },
+      });
+
+      return {
+        messages: populated.messages,
+      };
+    }
+
     const { offset, pagination } = getPaginationMeta(
       page,
       limit,
